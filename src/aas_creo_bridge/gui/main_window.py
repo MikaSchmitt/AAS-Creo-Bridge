@@ -3,8 +3,9 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox
 
-from aas_creo_bridge.app.logging import AppLogger, LogLevel
-from aas_creo_bridge.gui.widgets import LeftNav, LogWindow, StatusBar
+from aas_creo_bridge.app import AppLogger
+from aas_creo_bridge.gui.widgets import StatusBar, LeftNav
+from aas_creo_bridge.gui.views import HomeView, ImportView, ExplorerView, ConnectionsView, SettingsView, LogWindow
 
 
 class MainWindow:
@@ -103,22 +104,18 @@ class MainWindow:
 
     def _register_views(self) -> None:
         self._views = {}
-        for name, subtitle in [
-            ("Home", "Overview and quick actions."),
-            ("Import", "Import AASX and related assets."),
-            ("Explorer", "Browse AAS structures and objects."),
-            ("Connections", "Manage connections (e.g., Creo, file sources)."),
-            ("Settings", "Application configuration."),
-        ]:
-            frame = tk.Frame(self.content_frame)
+
+        registry: list[tuple[str, type[tk.Frame]]] = [
+            ("Home", HomeView),
+            ("Import", ImportView),
+            ("Explorer", ExplorerView),
+            ("Connections", ConnectionsView),
+            ("Settings", SettingsView),
+        ]
+
+        for name, view_cls in registry:
+            frame = view_cls(self.content_frame)
             frame.grid(row=0, column=0, sticky="nsew")
-
-            title = tk.Label(frame, text=name, font=("Segoe UI", 16, "bold"))
-            title.pack(anchor="w")
-
-            hint = tk.Label(frame, text=subtitle, fg="gray")
-            hint.pack(anchor="w", pady=(6, 0))
-
             self._views[name] = frame
 
     def _build_status_bar(self) -> None:
