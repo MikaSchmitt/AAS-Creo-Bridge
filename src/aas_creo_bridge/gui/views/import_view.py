@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, simpledialog, ttk
+from tkinter import simpledialog, ttk, filedialog, messagebox
+
+from aas_creo_bridge.adapters.aasx.AASXImporter import import_aasx
+from aas_creo_bridge.app.context import get_aasx_registry, get_logger
 
 
 class ImportView(tk.Frame):
@@ -93,16 +96,29 @@ class ImportView(tk.Frame):
             return
 
         path = Path(file_path)
+
+        try:
+            result = import_aasx(path)
+        except Exception as e:
+            messagebox.showerror("AASX import failed", str(e))
+            return
+
+        # Track in the view (if you still want this list locally)
         self._aasx_files.append(path)
+
+        # Track app-wide
+        aasx_registry = get_aasx_registry()
+        aasx_registry.register(result)
 
         # Add to tree
         aasx_node = self.aasx_tree.insert("", "end", text=path.name, values=("AASX",))
 
-        # Placeholder shells (until you connect your real AASX parsing)
-        # TODO: If you already have a function that returns shell names/ids, call it here and insert real entries.
-        demo_shells = ["AdministrationShell_1", "AdministrationShell_2"]
-        for shell in demo_shells:
-            self.aasx_tree.insert(aasx_node, "end", text=shell, values=("Shell",))
+        # Populate shells from adapter result
+        if result.shells:
+            for shell in result.shells:
+                self.aasx_tree.insert(aasx_node, "end", text=shell, values=("AAS",))
+        else:
+            self.aasx_tree.insert(aasx_node, "end", text="(no shells found)", values=("Info",))
 
         self.aasx_tree.item(aasx_node, open=True)
 
