@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from typing import Callable
 
 from aas_creo_bridge.app.logging import AppLogger, LogEntry, LogLevel
 
@@ -9,8 +10,8 @@ class StatusBar(tk.Frame):
         self,
         master: tk.Misc,
         *,
-        on_clear_log: callable,
-        on_show_log: callable,
+        on_clear_log: Callable[[], None],
+        on_show_log: Callable[[], None],
         initial_message: str = "Ready.",
     ) -> None:
         super().__init__(master, bd=1, relief="solid", padx=8, pady=6)

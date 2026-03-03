@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
-
-from aas_creo_bridge.app.logging import AppLogger, LogEntry, LogLevel
-
+from typing import Callable
 
 class LeftNav(tk.Frame):
     def __init__(
@@ -11,7 +9,7 @@ class LeftNav(tk.Frame):
         master: tk.Misc,
         *,
         views: list[str],
-        on_select_view: callable,
+        on_select_view: Callable[[str], None],
         initial_expanded: bool = False,
         width_expanded: int = 200,
         width_collapsed: int = 52,

@@ -3,7 +3,9 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox
 
-from aas_creo_bridge.app import AppLogger
+from aas_creo_bridge import __version__
+from aas_creo_bridge.app.context import get_logger
+from aas_creo_bridge.app.logging import AppLogger
 from aas_creo_bridge.gui.widgets import StatusBar, LeftNav
 from aas_creo_bridge.gui.views import HomeView, ImportView, ExplorerView, ConnectionsView, SettingsView, LogWindow
 
@@ -16,7 +18,8 @@ class MainWindow:
 
         self._views: dict[str, tk.Frame] = {}
 
-        self.logger = AppLogger()
+        self.logger = get_logger()
+        assert isinstance(self.logger, AppLogger)
         self._log_window = LogWindow(self.root)
 
         self._create_menu_bar()
@@ -147,6 +150,7 @@ class MainWindow:
 
     # ---- Status + logging API ----
     def set_status(self, status: str) -> None:
+        """Sets the status of the application ('idle' or 'busy')."""
         self.status_bar.set_status(status)
 
     def clear_log(self) -> None:
@@ -158,6 +162,7 @@ class MainWindow:
         self._log_window.show(self.logger.lines)
 
     def run(self) -> None:
+        """Starts the application main loop."""
         self.root.mainloop()
 
     # ---- Top menu actions (placeholders for now) ----
@@ -209,5 +214,5 @@ class MainWindow:
         self.logger.info("About opened.")
         messagebox.showinfo(
             "About",
-            "AAS-Creo-Bridge\n\nA tool for integrating Asset Administration Shells with Creo.",
+            f"AAS-Creo Bridge v{__version__}\n\nLink AAS models with Creo Parametric.\n\n© 2026",
         )

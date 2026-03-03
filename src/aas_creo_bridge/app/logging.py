@@ -28,7 +28,6 @@ class LogEntry:
 
 LogListener = Callable[[LogEntry], None]
 
-
 @dataclass
 class AppLogger:
     """
