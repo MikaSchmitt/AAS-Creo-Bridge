@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from aas_creo_bridge.app import get_logger
+from aas_creo_bridge.app.context import get_logger
 from aas_creo_bridge.app.logging import LogEntry, LogLevel
 
 

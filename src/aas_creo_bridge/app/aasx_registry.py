@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import typing
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 
 from aas_creo_bridge.adapters.aasx.AASXImporter import AASXImportResult
+from aas_creo_bridge.app.context import get_logger
 
 if typing.TYPE_CHECKING:
     from typing import Callable
@@ -61,6 +63,6 @@ class AASXRegistry:
         for listener in self._listeners:
             try:
                 listener()
-            except Exception:
-                # In a real app, we might log this or handle it better.
-                pass
+            except Exception as e:
+                logger = get_logger()
+                logger.error(f"Error in AASXRegistry listener: {e}", exc_info=traceback.format_exc())

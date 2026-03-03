@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from typing import Callable
 
-from aas_creo_bridge.app.logging import AppLogger, LogEntry, LogLevel
+from aas_creo_bridge.app.logging import LogStore, LogEntry, LogLevel
 
 class StatusBar(tk.Frame):
     def __init__(
@@ -38,12 +38,12 @@ class StatusBar(tk.Frame):
         self._show_btn = tk.Button(self, text="Show Log", command=on_show_log, width=10)
         self._show_btn.grid(row=0, column=3, sticky="e")
 
-    def subscribe_to_logger(self, logger: AppLogger) -> None:
+    def subscribe_to_log_store(self, log_store: LogStore) -> None:
         """
-        Subscribe this status bar to logger updates so the "last message" (and dot)
+        Subscribe this status bar to log store updates so the "last message" (and dot)
         follow the most recent log entry automatically.
         """
-        logger.subscribe(self.on_log_entry)
+        log_store.subscribe(self.on_log_entry)
 
     def on_log_entry(self, entry: LogEntry) -> None:
         # Keep it short in the status bar.

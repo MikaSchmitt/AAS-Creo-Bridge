@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+import traceback
 from pathlib import Path
 from tkinter import simpledialog, ttk, filedialog, messagebox
 
@@ -103,7 +104,9 @@ class ImportView(tk.Frame):
 
         try:
             result = import_aasx(path)
+            get_logger().info(f"Successfully imported AASX: {path.name}")
         except Exception as e:
+            get_logger().error(f"Failed to import AASX: {path.name}", exc_info=traceback.format_exc())
             messagebox.showerror("AASX import failed", str(e))
             return
 
@@ -139,7 +142,10 @@ class ImportView(tk.Frame):
         if not repo:
             return
 
+        get_logger().info(f"Connecting to repository: {repo}")
+
         if repo in self._repositories:
+            get_logger().info(f"Repository already connected: {repo}")
             messagebox.showinfo("Repository", "This repository is already connected.")
             return
 
@@ -155,14 +161,17 @@ class ImportView(tk.Frame):
         idx = int(selection[0])
         repo_value = self.repo_list.get(idx)
 
+        get_logger().info(f"Removing repository: {repo_value}")
         self.repo_list.delete(idx)
         try:
             self._repositories.remove(repo_value)
         except ValueError:
+            get_logger().warning(f"Failed to remove repository {repo_value} from internal list (not found)")
             # Shouldn't happen, but keep UI resilient
             pass
 
     def _on_clear(self) -> None:
+        get_logger().info("Clearing AASX and repository lists.")
         self._aasx_files.clear()
         self._repositories.clear()
 
