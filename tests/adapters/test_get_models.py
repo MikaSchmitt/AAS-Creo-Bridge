@@ -116,7 +116,7 @@ def test_get_models_from_aas_extracts_consuming_apps_and_file_metadata(monkeypat
     assert len(out[0].consuming_applications) == 1
     assert out[0].consuming_applications[0].application_name == "Creo"
     assert len(out[0].metadata) == 1
-    assert out[0].metadata[0].format_name == "STEP"
+    assert out[0].metadata[0].file_format.format_name == "STEP"
     assert out[0].metadata[0].filepath == "model.step"
 
 
