@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
-from aas_creo_bridge.app.context import get_aasx_registry
+from aas_creo_bridge.app.context import get_aasx_registry, get_sync_manager
 
 
 class ConnectionsView(tk.Frame):
@@ -113,7 +113,7 @@ class ConnectionsView(tk.Frame):
         # Use all currently loaded shells from registry
         registry = get_aasx_registry()
         all_shells = []
-        for res in registry.list_open():
+        for res in registry.list_by_path_open():
             all_shells.extend(res.shells)
 
         self.set_aas_items(all_shells)
@@ -169,6 +169,15 @@ class ConnectionsView(tk.Frame):
         pass
 
     def _sync_aas_to_creo(self) -> None:
+
+        if self._view_mode == "hier":
+            return
+        else:
+            selection = self.aas_list.selection_get()
+
+        sync_manager = get_sync_manager()
+        sync_manager.sync_aas_to_creo(selection)
+
         # TODO: push from AAS to Creo (and create model if missing)
         pass
 

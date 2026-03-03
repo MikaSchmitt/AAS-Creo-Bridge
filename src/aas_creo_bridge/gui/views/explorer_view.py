@@ -87,7 +87,7 @@ class ExplorerView(tk.Frame):
         # Use all currently loaded shells from registry
         registry = get_aasx_registry()
         all_shells = []
-        for res in registry.list_open():
+        for res in registry.list_by_path_open():
             all_shells.extend(res.shells)
 
         self.set_aas_options(all_shells)
