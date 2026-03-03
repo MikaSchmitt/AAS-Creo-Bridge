@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 from aas_creo_bridge import __version__
-from aas_creo_bridge.app.context import get_logger
+from aas_creo_bridge.app.context import get_logger, get_aasx_registry
 from aas_creo_bridge.app.logging import AppLogger
 from aas_creo_bridge.gui.widgets import StatusBar, LeftNav
 from aas_creo_bridge.gui.views import HomeView, ImportView, ExplorerView, ConnectionsView, SettingsView, LogWindow
