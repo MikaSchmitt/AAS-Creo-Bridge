@@ -3,6 +3,8 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
+from aas_creo_bridge.app import get_aasx_registry
+
 
 class ExplorerView(tk.Frame):
     def __init__(self, parent: tk.Misc) -> None:
@@ -77,6 +79,18 @@ class ExplorerView(tk.Frame):
         # Initial empty state (no AAS manager yet)
         self._clear_tree()
         self._show_details_text("No AAS loaded. Import/load an AAS to browse its structure.")
+
+        # Subscribe to AASX registry changes to update views
+        get_aasx_registry().add_listener(self._on_registry_changed)
+
+    def _on_registry_changed(self) -> None:
+        # Use all currently loaded shells from registry
+        registry = get_aasx_registry()
+        all_shells = []
+        for res in registry.list_open():
+            all_shells.extend(res.shells)
+
+        self.set_aas_options(all_shells)
 
     # ---- Hooks for a future AAS manager/controller ----
     def set_aas_options(self, names: list[str], *, select_first: bool = True) -> None:

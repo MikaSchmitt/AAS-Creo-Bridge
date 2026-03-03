@@ -3,6 +3,8 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
+from aas_creo_bridge.app import get_aasx_registry
+
 
 class ConnectionsView(tk.Frame):
     def __init__(self, parent: tk.Misc) -> None:
@@ -81,29 +83,40 @@ class ConnectionsView(tk.Frame):
         actions_inner = ttk.Frame(actions)
         actions_inner.grid(row=0, column=0, sticky="n")
 
-        ttk.Label(actions_inner, text="Link actions", font=("Segoe UI", 11, "bold")).pack(anchor="center", pady=(0, 10))
-
-        self.btn_assert_equal = ttk.Button(actions_inner, text="≡", command=self._assert_equal)
-        self.btn_assert_equal.pack(fill="x", pady=(0, 8))
+        self.btn_assert_equal = ttk.Button(actions_inner, text="≡", command=self._assert_equal, width=3)
+        self.btn_assert_equal.pack(fill="none", pady=(25, 8))
 
         self.btn_sync_aas_to_creo = ttk.Button(
             actions_inner,
             text="➡",
             command=self._sync_aas_to_creo,
+            width = 3
         )
-        self.btn_sync_aas_to_creo.pack(fill="x", pady=(0, 8))
+        self.btn_sync_aas_to_creo.pack(fill="none", pady=(0, 8))
 
-        self.btn_sync_creo_to_aas = ttk.Button(actions_inner, text="⬅", command=self._sync_creo_to_aas)
-        self.btn_sync_creo_to_aas.pack(fill="x", pady=(0, 8))
+        self.btn_sync_creo_to_aas = ttk.Button(actions_inner, text="⬅", command=self._sync_creo_to_aas, width=3)
+        self.btn_sync_creo_to_aas.pack(fill="none", pady=(0, 8))
 
         ttk.Separator(actions_inner, orient="horizontal").pack(fill="x", pady=(8, 8))
 
-        self.btn_break = ttk.Button(actions_inner, text="❌", command=self._break_connection)
-        self.btn_break.pack(fill="x")
+        self.btn_break = ttk.Button(actions_inner, text="❌", command=self._break_connection, width=3)
+        self.btn_break.pack(fill="none")
 
         # Initial mode + placeholder content
         self._apply_view_mode()
         self._load_placeholders()
+
+        # Subscribe to AASX registry changes to update views
+        get_aasx_registry().add_listener(self._on_registry_changed)
+
+    def _on_registry_changed(self) -> None:
+        # Use all currently loaded shells from registry
+        registry = get_aasx_registry()
+        all_shells = []
+        for res in registry.list_open():
+            all_shells.extend(res.shells)
+
+        self.set_aas_items(all_shells)
 
     # ---- Public hooks for later wiring ----
     def set_aas_items(self, items: list[str]) -> None:

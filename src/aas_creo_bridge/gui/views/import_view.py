@@ -4,6 +4,10 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import simpledialog, ttk, filedialog, messagebox
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from aas_creo_bridge.adapters.aasx.AASXImporter import AASXImportResult
+
 from aas_creo_bridge.adapters.aasx.AASXImporter import import_aasx
 from aas_creo_bridge.app.context import get_aasx_registry, get_logger
 
@@ -164,5 +168,8 @@ class ImportView(tk.Frame):
 
         for item in self.aasx_tree.get_children(""):
             self.aasx_tree.delete(item)
+
+        aasx_registry = get_aasx_registry()
+        aasx_registry.list_clear()
 
         self.repo_list.delete(0, "end")
