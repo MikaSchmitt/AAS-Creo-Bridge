@@ -36,7 +36,6 @@ class MainWindow:
 
         file_menu = tk.Menu(menubar, tearoff=False)
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="New Session", command=self._new_session)
         file_menu.add_command(label="Open…", command=self._open)
         file_menu.add_command(label="Save", command=self._save)
         file_menu.add_command(label="Save As…", command=self._save_as)
@@ -162,15 +161,9 @@ class MainWindow:
         self.root.mainloop()
 
     # ---- Top menu actions (placeholders for now) ----
-    def _new_session(self) -> None:
-        self.set_status("busy")
-        self.logger.info("New session requested.")
-        messagebox.showinfo("New Session", "TODO: Start a new session.")
-        self.set_status("idle")
-
     def _open(self) -> None:
         self.logger.info("Open requested.")
-        messagebox.showinfo("Open", "TODO: Open a project/file.")
+        messagebox.showinfo("Open", "TODO: Open a file.")
 
     def _save(self) -> None:
         self.logger.info("Save requested.")
