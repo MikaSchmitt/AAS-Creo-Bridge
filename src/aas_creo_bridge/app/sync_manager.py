@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-from aas_creo_bridge.adapters.aasx.get_models import get_models_from_aas
+from aas_creo_bridge.adapters.aasx.get_models import get_models_from_aas, ConsumingApplication, find_model_for_app
 from aas_creo_bridge.adapters.creo.model_importer import import_model_into_creo
 from aas_creo_bridge.app.context import get_aasx_registry
 
@@ -68,6 +68,9 @@ class SynchronizationManager:
         aasx_registry = get_aasx_registry()
         aasx: AASXImportResult = aasx_registry.get(aas_shell_id)
         models = get_models_from_aas(aasx, aas_shell_id)
+
+        find_model_for_app(models, [ConsumingApplication("Creo", "12", "Creo 12"), ConsumingApplication("STEP", "AP312", "Step-2.14")])
+
 
         # TODO: select best fitting model
         # TODO: handle zip files
