@@ -1,23 +1,30 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+import logging
 
-from aas_creo_bridge.app.logging import AppLogger
+from aas_creo_bridge.app.logging import LogStore
 
 if TYPE_CHECKING:
     from aas_creo_bridge.app.aasx_registry import AASXRegistry
 
-_logger: AppLogger | None = None
+_log_store: LogStore | None = None
 _aasx_registry: AASXRegistry | None= None
 
-def init_logger() -> AppLogger:
-    global _logger
-    if _logger is None:
-        _logger = AppLogger()
-    return _logger
+def init_log_store() -> LogStore:
+    global _log_store
+    if _log_store is None:
+        _log_store = LogStore()
+    return _log_store
 
-def get_logger() -> AppLogger:
-    return init_logger()
+def get_log_store() -> LogStore:
+    return init_log_store()
+
+def get_logger(name: str | None = None) -> logging.Logger:
+    base_name = "aas_creo_bridge"
+    if name:
+        return logging.getLogger(f"{base_name}.{name}")
+    return logging.getLogger(base_name)
 
 def init_aasx_registry() -> AASXRegistry:
     global _aasx_registry

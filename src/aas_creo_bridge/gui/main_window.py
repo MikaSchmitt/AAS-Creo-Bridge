@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import typing
 import tkinter as tk
+import traceback
 from tkinter import messagebox
 
+if typing.TYPE_CHECKING:
+    from types import TracebackType
+
 from aas_creo_bridge import __version__
-from aas_creo_bridge.app.context import get_logger, get_aasx_registry
-from aas_creo_bridge.app.logging import AppLogger
+from aas_creo_bridge.app.context import get_logger, get_aasx_registry, get_log_store
 from aas_creo_bridge.gui.widgets import StatusBar, LeftNav
 from aas_creo_bridge.gui.views import HomeView, ImportView, ExplorerView, ConnectionsView, SettingsView, LogWindow
 
@@ -19,15 +23,18 @@ class MainWindow:
         self._views: dict[str, tk.Frame] = {}
 
         self.logger = get_logger()
-        assert isinstance(self.logger, AppLogger)
+        self.log_store = get_log_store()
         self._log_window = LogWindow(self.root)
+
+        # Setup global exception handler
+        self.root.report_callback_exception = self._report_callback_exception
 
         self._create_menu_bar()
         self._build_ui()
 
-        # Wire UI to logger (pub/sub)
-        self.status_bar.subscribe_to_logger(self.logger)
-        self.logger.subscribe(lambda entry: self._log_window.append(entry.format(with_timestamp=True)))
+        # Wire UI to log store (pub/sub)
+        self.status_bar.subscribe_to_log_store(self.log_store)
+        self.log_store.subscribe(lambda entry: self._log_window.append(entry.format(with_timestamp=True)))
 
         self.set_status("idle")
         self.logger.info("Application started.")
@@ -154,12 +161,12 @@ class MainWindow:
         self.status_bar.set_status(status)
 
     def clear_log(self) -> None:
-        self.logger.clear()
+        self.log_store.clear()
         self.status_bar.set_last_message("Log cleared.")
         self._log_window.clear()
 
     def _show_full_log(self) -> None:
-        self._log_window.show(self.logger.lines)
+        self._log_window.show(self.log_store.lines)
 
     def run(self) -> None:
         """Starts the application main loop."""
@@ -216,3 +223,13 @@ class MainWindow:
             "About",
             f"AAS-Creo Bridge v{__version__}\n\nLink AAS models with Creo Parametric.\n\n© 2026",
         )
+
+    def _report_callback_exception(
+        self,
+        exc_type: type[BaseException],
+        exc_value: BaseException,
+        exc_traceback: TracebackType | None
+    ) -> None:
+        err_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        self.logger.error(f"Unhandled UI exception: {exc_value}", exc_info=err_msg)
+        messagebox.showerror("Unexpected Error", f"An unhandled error occurred:\n{exc_value}")

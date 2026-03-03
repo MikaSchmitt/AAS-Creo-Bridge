@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import logging
+import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 
 class LogLevel(StrEnum):
@@ -18,31 +20,31 @@ class LogEntry:
     timestamp: datetime
     level: LogLevel
     message: str
+    exc_info: str | None = None
 
     def format(self, *, with_timestamp: bool = True) -> str:
+        msg = f"{self.level}: {self.message}"
         if with_timestamp:
             ts = self.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            return f"[{ts}] {self.level}: {self.message}"
-        return f"{self.level}: {self.message}"
+            msg = f"[{ts}] {msg}"
+        if self.exc_info:
+            msg += f"\n{self.exc_info}"
+        return msg
 
 
 LogListener = Callable[[LogEntry], None]
 
-@dataclass
-class AppLogger:
-    """
-    Simple in-memory application logger.
 
-    - Stores log entries (timestamp + level + message)
-    - Allows listeners (e.g. UI) to be notified on new entries
-    - Exposes formatted string lines for simple UIs
+@dataclass
+class LogStore:
+    """
+    Simple in-memory store for log entries.
     """
     _entries: list[LogEntry] = field(default_factory=list)
     _listeners: list[LogListener] = field(default_factory=list)
 
     @property
     def entries(self) -> list[LogEntry]:
-        # Return a copy so callers can't mutate internal state accidentally.
         return list(self._entries)
 
     @property
@@ -56,24 +58,49 @@ class AppLogger:
     def subscribe(self, listener: LogListener) -> None:
         self._listeners.append(listener)
 
-    def log(self, message: str, *, level: LogLevel = LogLevel.INFO) -> LogEntry:
-        entry = LogEntry(timestamp=datetime.now(), level=level, message=message)
+    def add(self, message: str, level: LogLevel, exc_info: str | None = None) -> LogEntry:
+        entry = LogEntry(timestamp=datetime.now(), level=level, message=message, exc_info=exc_info)
         self._entries.append(entry)
         for listener in self._listeners:
             listener(entry)
         return entry
 
-    def debug(self, message: str) -> LogEntry:
-        return self.log(message, level=LogLevel.DEBUG)
-
-    def info(self, message: str) -> LogEntry:
-        return self.log(message, level=LogLevel.INFO)
-
-    def warning(self, message: str) -> LogEntry:
-        return self.log(message, level=LogLevel.WARNING)
-
-    def error(self, message: str) -> LogEntry:
-        return self.log(message, level=LogLevel.ERROR)
-
     def clear(self) -> None:
         self._entries.clear()
+
+
+class AppLogHandler(logging.Handler):
+    """
+    Standard logging handler that redirects all records to a LogStore instance.
+    """
+
+    def __init__(self, log_store: LogStore) -> None:
+        super().__init__()
+        self._log_store = log_store
+
+    def emit(self, record: logging.LogRecord) -> None:
+        level_map = {
+            logging.DEBUG: LogLevel.DEBUG,
+            logging.INFO: LogLevel.INFO,
+            logging.WARNING: LogLevel.WARNING,
+            logging.ERROR: LogLevel.ERROR,
+            logging.CRITICAL: LogLevel.ERROR,
+        }
+        level = level_map.get(record.levelno, LogLevel.INFO)
+        message = f"{record.name}: {record.getMessage()}"
+
+        exc_info = None
+        if record.exc_info:
+            exc_info = "".join(traceback.format_exception(*record.exc_info))
+
+        self._log_store.add(message, level=level, exc_info=exc_info)
+
+
+def setup_logging(log_store: LogStore) -> None:
+    """
+    Configures the standard logging library to use our LogStore.
+    """
+    handler = AppLogHandler(log_store)
+    root_logger = logging.getLogger("aas_creo_bridge")
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
-from aas_creo_bridge.app import get_aasx_registry
+from aas_creo_bridge.app.context import get_aasx_registry, get_logger
 
 
 class ExplorerView(tk.Frame):
@@ -132,6 +132,7 @@ class ExplorerView(tk.Frame):
         Replace the placeholder behavior with real AAS loading + tree building.
         """
         selected = self.get_selected_aas()
+        get_logger().info(f"AAS selected in Explorer: {selected}")
         if selected is None:
             self._clear_tree()
             self._show_details_text("No AAS loaded. Import/load an AAS to browse its structure.")

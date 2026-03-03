@@ -3,7 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
-from aas_creo_bridge.app import get_aasx_registry
+from aas_creo_bridge.app.context import get_aasx_registry
 
 
 class ConnectionsView(tk.Frame):
