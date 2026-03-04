@@ -51,7 +51,7 @@ def _extract_file_versions(file_collection: model.SubmodelElementCollection, fil
     try:
         file_versions = file_collection.get_referable("FileVersion")
     except KeyError:
-        return
+        return # DigitalFile is optional
     except Exception:
         _logger.exception("Failed to read FileVersion")
         return
