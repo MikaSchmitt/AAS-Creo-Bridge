@@ -69,8 +69,7 @@ class SynchronizationManager:
         aasx: AASXImportResult = aasx_registry.get(aas_shell_id)
         models = get_models_from_aas(aasx, aas_shell_id)
 
-        find_model_for_app(models, [ConsumingApplication("Creo", "12", "Creo 12"), ConsumingApplication("STEP", "AP312", "Step-2.14")])
-
+        modles_for_app = find_model_for_app(models, [ConsumingApplication("Creo", "12", "Creo 12"), ConsumingApplication("STEP", "AP312", "Step-2.14")])
 
         # TODO: select best fitting model
         # TODO: handle zip files

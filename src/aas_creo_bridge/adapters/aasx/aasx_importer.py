@@ -25,14 +25,21 @@ class AASXImportResult:
 
 def import_aasx(path: Path) -> AASXImportResult:
     """
-    Adapter entry point for importing an AASX package.
+    Import an AASX file and extract relevant information including objects, supplementary
+    files, metadata, and a thumbnail, if available. The method validates the file's
+    existence, reads its contents, and processes it into a structured format suitable
+    for further usage.
 
-    For now this is a lightweight importer:
-    - validates it's a readable zip
-    - lists contained files
-    - provides placeholder shell discovery hooks
-
-    Replace `_discover_shells(...)` with real AAS parsing when available.
+    :param path: Path of the AASX file to be imported
+    :type path: Path
+    :return: An instance of AASXImportResult containing the imported data such as object
+        store, supplementary file store, metadata, thumbnail, and the list of discovered
+        shells
+    :rtype: AASXImportResult
+    :raises FileNotFoundError: If the specified AASX file does not exist or is not
+        accessible
+    :raises ValueError: If the AASX file is invalid or does not conform to the expected
+        format
     """
     if not path.exists() or not path.is_file():
         raise FileNotFoundError(f"AASX file not found: {path}")

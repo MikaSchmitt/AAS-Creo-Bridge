@@ -6,6 +6,8 @@ parse, store, and compare version information typically formatted as
 comparisons based on the semantic structure of the versions.
 """
 import re
+from typing import LiteralString
+
 
 class Version:
 
@@ -40,15 +42,23 @@ class Version:
         normalized_qualifier = (qualifier
                      .replace("-", "")
                      .replace("_", ""))
+        remainder = normalized_qualifier
 
-        self.name = re.fullmatch(r"[A-Za-z]+", normalized_qualifier).group(1)
-        remainder = re.sub(r"[A-Za-z]+", r"", normalized_qualifier, count=1)
+        match = re.findall(r"[A-Za-z]+", normalized_qualifier)
+        self.name = ("" if match.__len__() is 0 else match[0])
+        if self.name != "":
+            remainder = remainder.replace(self.name, " ").strip()
 
-        version = re.fullmatch(r"(\d+\.*)+", remainder).group(1)
-        remainder = re.sub(r"(\d+\.*)+", r"", normalized_qualifier)
-        if remainder != "":
-            raise ValueError(f"Invalid version qualifier: {qualifier}")
-        self.major, self.minor, self.patch = version.split(".")
+        version_match = re.match(r"(\d+(\.*\d+){0,2})", remainder)
+        version = "" if version_match is None else version_match.group(1)
+        remainder = remainder.replace(version, " ")
+        if remainder.strip() != "":
+            raise ValueError(f"Invalid version qualifier: {qualifier} cannot parse {remainder}")
+
+        versions: list[int] = [int(v) for v in version.split(".")]
+        versions.extend([0,0,0])
+
+        self.major, self.minor, self.patch = versions[0:3]
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Version):
