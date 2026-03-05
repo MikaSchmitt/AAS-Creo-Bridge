@@ -5,12 +5,27 @@ from basyx.aas import model
 from basyx.aas.model import AssetAdministrationShell
 
 from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
+from aas_creo_bridge.adapters.aasx.helpers import get_value
 
 from aas_creo_bridge.adapters.aasx.types import FileData, ConsumingApplication, FileMetadata, FileFormat
 
 _logger = logging.getLogger(__name__)
 
 def _get_element(obj: Any, prop: str) -> Any:
+    """
+    Get the value of a property from an object, or its id_short if it's a dict.
+
+    This is an internal helper used while traversing BaSyx model objects.
+    Prefer :func:`aas_creo_bridge.adapters.aasx.helpers.get_value` for reading
+    SubmodelElement values.
+
+    :param obj: The object to extract the value from.
+    :type obj: Any
+    :param prop: The property name to use as a fallback.
+    :type prop: str
+    :return: The extracted value.
+    :rtype: Any
+    """
     return obj.value.get('id_short', prop)
 
 
@@ -25,29 +40,74 @@ MCAD_SEMANTIC_ID = model.ModelReference(
 )
 
 
-def _extract_consuming_applications(file_collection: model.SubmodelElementCollection, file_data: FileData) -> None:
+def _extract_consuming_applications(file_collection: model.SubmodelElementCollection) -> list[ConsumingApplication]:
+    """
+    Extract ``ConsumingApplication`` entries from a ``File`` collection.
+
+    The function is defensive:
+    - Missing ``ConsumingApplication`` -> returns an empty list
+    - Unexpected errors while reading -> logs and returns an empty list
+
+    Expected structure (idShorts) inside the collection is aligned with the
+    IDTA "Models3D" style layout, e.g.::
+
+        File/
+          ConsumingApplication/ [ { ApplicationName, ApplicationVersion, ApplicationQualifier }, ... ]
+
+    :param file_collection: The collection of submodel elements to extract from.
+    :type file_collection: model.SubmodelElementCollection
+    :return: List of consuming applications (empty if not present / unreadable).
+    :rtype: list[ConsumingApplication]
+    """
+    applications: list[ConsumingApplication] = []
+
     try:
         consuming_apps = file_collection.get_referable("ConsumingApplication")
     except KeyError:
-        return
+        return applications
     except Exception:
         _logger.exception("Failed to read ConsumingApplication")
-        return
+        return applications
 
-    if not hasattr(consuming_apps, "value"):
-        return
+    values = getattr(consuming_apps, "value", None)
+    if not values:
+        return applications
 
-    for app in consuming_apps.value:
-        file_data.add_application(
-            ConsumingApplication(
-                app.get_referable("ApplicationName").value,
-                app.get_referable("ApplicationVersion").value,
-                app.get_referable("ApplicationQualifier").value,
-            )
+    applications = [
+        ConsumingApplication(
+            get_value(app, "ApplicationName"),
+            get_value(app, "ApplicationVersion"),
+            get_value(app, "ApplicationQualifier"),
         )
+        for app in values
+    ]
+    return applications
 
 
-def _extract_file_versions(file_collection: model.SubmodelElementCollection, file_data: FileData) -> None:
+def _extract_file_versions(file_collection: model.SubmodelElementCollection) -> FileMetadata | None:
+    """
+    Extract a ``FileVersion`` entry from a ``File`` collection.
+
+    Notes / current behavior:
+    - If multiple ``FileVersion`` items exist, the function currently returns the
+      *last* parsed one (this mirrors the current implementation and can be
+      extended later to return a list).
+    - ``DigitalFile`` is optional; if absent, ``filepath`` and ``file_content_type``
+      are returned as empty strings.
+    - ``ExternalFile`` is detected and logged, but not supported yet.
+
+    Expected structure (idShorts) inside the collection is typically::
+
+        File/
+          FileVersion/ [ { FileVersionId, FileFormat{...}, DigitalFile?, ExternalFile? }, ... ]
+
+    :param file_collection: The collection of submodel elements to extract from.
+    :type file_collection: model.SubmodelElementCollection
+    :return: Parsed metadata for a file version, or ``None`` if not present/unreadable.
+    :rtype: FileMetadata | None
+    """
+    metadata: FileMetadata = None
+
     try:
         file_versions = file_collection.get_referable("FileVersion")
     except KeyError:
@@ -59,12 +119,12 @@ def _extract_file_versions(file_collection: model.SubmodelElementCollection, fil
     if not hasattr(file_versions, "value"):
         return
 
-    for version_item in file_versions.value:
-        version = version_item.get_referable("FileVersionId").value
+    for version_item in get_value(file_versions):
+        version = get_value(version_item, "FileVersionId")
         file_format = version_item.get_referable("FileFormat")
-        format_name = file_format.get_referable("FormatName").value
-        format_version = file_format.get_referable("FormatVersion").value
-        format_qualifier = file_format.get_referable("FormatQualifier").value
+        format_name = get_value(file_format, "FormatName")
+        format_version = get_value(file_format, "FormatVersion")
+        format_qualifier = get_value(file_format, "FormatQualifier")
 
         filepath, file_content_type = "", ""
         try:
@@ -87,17 +147,37 @@ def _extract_file_versions(file_collection: model.SubmodelElementCollection, fil
         except Exception:
             _logger.exception("Failed to read ExternalFile")
 
-        file_data.add_metadata(
-            FileMetadata(
-                version,
-                filepath,
-                file_content_type,
-                FileFormat(format_name, format_version, format_qualifier),
-            )
+        metadata = FileMetadata(
+            version,
+            filepath,
+            file_content_type,
+            FileFormat(format_name, format_version, format_qualifier),
         )
+
+        return metadata
 
 
 def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
+    """
+    Extract 3D models from an Asset Administration Shell within an AASX result.
+
+    The extractor traverses all submodels referenced by the given AAS, and:
+    - If a submodel has semantic id :data:`MODELS3D_SEMANTIC_ID`, it looks for the
+      ``Model3D`` element list and reads per-item ``File`` collections.
+    - For each ``File`` collection it collects:
+        * consuming applications via :func:`_extract_consuming_applications`
+        * a file version via :func:`_extract_file_versions`
+
+    If no ``FileVersion`` can be extracted for a model, a ``ValueError`` is raised
+    (this is treated as a data quality issue for the current workflow).
+
+    :param aasx: The AASX import result containing the object store.
+    :type aasx: AASXImportResult
+    :param aas_id: The identifier of the AAS to extract models from.
+    :type aas_id: str
+    :return: A list of FileData objects representing the extracted models.
+    :rtype: list[FileData]
+    """
     files: list[FileData] = []
 
     aas = aasx.object_store.get_identifiable(aas_id)
@@ -127,8 +207,14 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
                     continue
 
                 file_data = FileData()
-                _extract_consuming_applications(file_collection, file_data)
-                _extract_file_versions(file_collection, file_data)
+                for app in _extract_consuming_applications(file_collection):
+                    file_data.add_application(app)
+                meta = _extract_file_versions(file_collection)
+                if meta:
+                    file_data.add_metadata(meta)
+                else:
+                    _logger.warning("No FileVersion found")
+                    raise ValueError("No FileVersion found")
                 files.append(file_data)
 
         if submodel.semantic_id == MCAD_SEMANTIC_ID:
@@ -136,26 +222,70 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
 
     return files
 
+def group_models_by_version(models: list[FileData]) -> dict[str, list[FileData]]:
+    """
+    Group a list of models by their file version.
+
+    :param models: The list of models to group.
+    :type models: list[FileData]
+    :return: A dictionary mapping version strings to lists of FileData objects.
+    :rtype: dict[str, list[FileData]]
+    """
+    raise NotImplementedError
+    return {version: [m for m in models if m.metadata.file_version == version] for version in set(model.file_version for model in models)}
+
+
+def filter_model_by_app(models: list[FileData], app_required: list[ConsumingApplication], keep_app_not_defined=True) -> list[list[FileData]]:
+    """
+    Filter models based on required applications. (Note: Currently incomplete).
+
+    :param models: The list of models to filter.
+    :type models: list[FileData]
+    :param app_required: List of required applications.
+    :type app_required: list[ConsumingApplication]
+    :param keep_app_not_defined: Whether to keep models that don't define any application.
+    :type keep_app_not_defined: bool
+    :return: A filtered list of models.
+    :rtype: list[list[FileData]]
+    """
+    raise NotImplementedError
+
+
 def find_model_for_app(models: list[FileData], app_required: list[ConsumingApplication]) -> list[list[FileData]] | None:
     """
-    :param models: a list of FileData of all the models to search through
-    :param app_required: a list of ConsumingApplication to search for ordered by priority
-    :return: a list of lists of FileData for models that have at least one of the required applications grouped by application and ordered by priority
-    Filter list of models for required apps. Models that don't have a required application specified are skipped.
+    Filter list of models for required apps. Models that don't have a required
+    application specified are skipped.
+
+    :param models: a list of FileData of all the models to search through.
+    :type models: list[FileData]
+    :param app_required: a list of ConsumingApplication to search for ordered by priority.
+    :type app_required: list[ConsumingApplication]
+    :return: a list of lists of FileData for models that have at least one of the required applications grouped by application and ordered by priority.
+    :rtype: list[list[FileData]] | None
     """
-    file_data: list[list[FileData]] = [[]]
-    for m in models:
-        for r_app in app_required:
+    file_data: list[list[FileData]] = []
+    for r_app in app_required:
+        for m in models:
             file_data_for_app: list[FileData] = []
             for c_app in m.consuming_applications:
                 if (c_app.application_name == r_app.application_name
                     and c_app.application_version <= r_app.application_version):
                     file_data_for_app.append(m)
                     break
-            file_data.append(file_data_for_app)
+            if file_data_for_app: file_data.append(file_data_for_app)
     return file_data
 
 def find_file_for_file_format(models: list[FileData], filetype: list[FileFormat]) -> list[FileData] | None:
+    """
+    Find files that match the specified file formats.
+
+    :param models: List of models to search in.
+    :type models: list[FileData]
+    :param filetype: List of file formats to search for.
+    :type filetype: list[FileFormat]
+    :return: A list of models that match any of the specified file formats.
+    :rtype: list[FileData] | None
+    """
     file_data: list[FileData] = []
     for m in models:
         for meta in m.metadata:

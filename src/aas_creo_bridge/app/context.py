@@ -6,7 +6,7 @@ import logging
 from aas_creo_bridge.app.logging import LogStore
 
 if TYPE_CHECKING:
-    from aas_creo_bridge.adapters.aasx.aasx_registry import AASXRegistry
+    from aas_creo_bridge.adapters.aasx import AASXRegistry
     from aas_creo_bridge.app.sync_manager import SyncManager
 
 _log_store: LogStore | None = None

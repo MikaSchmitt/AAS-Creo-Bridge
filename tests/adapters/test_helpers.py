@@ -20,6 +20,9 @@ def test_version_class_constructors():
     assert ver.minor == 2
     assert ver.patch == 7
 
+    ver = Version("10")
+    assert ver.major == 10
+
     try:
         ver = Version("15alpha2")
     except ValueError:

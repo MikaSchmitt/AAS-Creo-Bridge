@@ -1,14 +1,19 @@
 from __future__ import annotations
+
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-from aas_creo_bridge.adapters.aasx.get_models import get_models_from_aas, ConsumingApplication, find_model_for_app
+from aas_creo_bridge.adapters.aasx import AASXImportResult
+from aas_creo_bridge.adapters.aasx import get_models_from_aas, ConsumingApplication, find_model_for_app
+from aas_creo_bridge.adapters.aasx import FileData
 from aas_creo_bridge.adapters.creo.model_importer import import_model_into_creo
 from aas_creo_bridge.app.context import get_aasx_registry
 
 if TYPE_CHECKING:
     from typing import List
+
+_logger = logging.getLogger(__name__)
 
 @dataclass
 class ConnectionLink:
@@ -69,9 +74,29 @@ class SynchronizationManager:
         aasx: AASXImportResult = aasx_registry.get(aas_shell_id)
         models = get_models_from_aas(aasx, aas_shell_id)
 
-        modles_for_app = find_model_for_app(models, [ConsumingApplication("Creo", "12", "Creo 12"), ConsumingApplication("STEP", "AP312", "Step-2.14")])
+        # TODO: set creo version based on settings / config
+        models_for_app = find_model_for_app(models, [ConsumingApplication("Creo Parametric", "12", "Creo Parametric 12"), ConsumingApplication("STEP", "AP312", "Step-2.14")])
 
-        # TODO: select best fitting model
+        _models_to_remove: list[FileData] = []
+        for m in models:
+            if any([m in ma for ma in models_for_app]):
+                _models_to_remove.append(m)
+        for m in _models_to_remove:
+            models.remove(m)
+
+        if models:
+            _logger.info(f"Following models don't have a consuming application defined: {models}")
+
+        pass
+        # TODO: if not models define a consuming application search by file format
+
+        # TODO: select best fitting model Version -> Application -> file format
+        # Group by File Version
+
+        # Filter and Sort by Application (keep model if no consuming application is specified)
+
+        # Filter by File Format
+
         # TODO: handle zip files
         #import_model_into_creo()
 

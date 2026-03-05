@@ -67,6 +67,30 @@ def _patch_model(monkeypatch):
     )
     monkeypatch.setattr(get_models_mod, "model", fake_model)
     monkeypatch.setattr(get_models_mod, "AssetAdministrationShell", _FakeAssetAdministrationShell)
+
+    # Patch semantic-id constants too: they were created with the real basyx model at import time.
+    monkeypatch.setattr(
+        get_models_mod,
+        "MODELS3D_SEMANTIC_ID",
+        fake_model.ModelReference(
+            (fake_model.Key(type_=fake_model.KeyTypes.SUBMODEL, value="https://admin-shell.io/idta/Models3D/1/0"),),
+            type_=fake_model.Submodel,
+        ),
+    )
+    monkeypatch.setattr(
+        get_models_mod,
+        "MCAD_SEMANTIC_ID",
+        fake_model.ModelReference(
+            (
+                fake_model.Key(
+                    type_=fake_model.KeyTypes.SUBMODEL,
+                    value="https://admin-shell.io/sandbox/idta/handover/MCAD/0/1/",
+                ),
+            ),
+            type_=fake_model.Submodel,
+        ),
+    )
+
     return fake_model
 
 
@@ -134,6 +158,9 @@ def test_get_models_from_aas_skips_model_when_file_version_missing(monkeypatch):
     aas = _FakeAssetAdministrationShell([_FakeSmRef(submodel)])
     aasx = SimpleNamespace(object_store=_FakeStore(aas))
 
-    out = get_models_mod.get_models_from_aas(aasx, "aas_1")
-
-    assert out == []
+    try:
+        out = get_models_mod.get_models_from_aas(aasx, "aas_1")
+    except ValueError:
+        assert True
+    else:
+        assert False, "Expected ValueError"

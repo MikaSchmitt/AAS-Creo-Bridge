@@ -15,6 +15,22 @@ _logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class AASXImportResult:
+    """
+    Result of an AASX file import operation.
+
+    :ivar path: Path of the imported AASX file.
+    :type path: Path
+    :ivar object_store: Container for all Identifiable objects from the AASX.
+    :type object_store: DictObjectStore
+    :ivar file_store: Container for supplementary files from the AASX.
+    :type file_store: DictSupplementaryFileContainer
+    :ivar metadata: Core properties/metadata of the AASX package.
+    :type metadata: OPCCoreProperties | None
+    :ivar thumbnail: Raw bytes of the package thumbnail, if any.
+    :type thumbnail: bytes | None
+    :ivar shells: List of identifiers for Asset Administration Shells found in the package.
+    :type shells: list[str]
+    """
     path: Path
     object_store: DictObjectStore
     file_store: DictSupplementaryFileContainer
@@ -69,6 +85,16 @@ def import_aasx(path: Path) -> AASXImportResult:
 
 
 def _discover_shells(identifiers: set[str], objects: model.AbstractObjectStore) -> list[str]:
+    """
+    Identify and extract Asset Administration Shell identifiers from a set of object identifiers.
+
+    :param identifiers: Set of identifiers discovered in the AASX.
+    :type identifiers: set[str]
+    :param objects: The object store containing the actual objects.
+    :type objects: model.AbstractObjectStore
+    :return: A list of identifiers that correspond to Asset Administration Shells.
+    :rtype: list[str]
+    """
     aas_shells = []
 
     if not identifiers or not objects:
