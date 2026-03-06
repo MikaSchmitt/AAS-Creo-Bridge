@@ -1,37 +1,41 @@
 from pathlib import Path
 import subprocess
 import time
+from typing import Union
+
 import creopyson
 
 
-def connect_to_creoson(max_retries: int = 5, delay: int = 2) -> creopyson.Client:
+def connect_to_creoson(
+    server_folder: Union[str, Path],
+    max_retries: int = 5,
+    delay: int = 2,
+) -> creopyson.Client:
     """
-    Locates the Creoson server relative to this script, starts it,
-    and establishes a connection with retry logic.
+    Starts the Creoson server from the provided folder and connects with retry logic.
+
+    :raises FileNotFoundError: If the Creoson batch file does not exist.
+    :raises RuntimeError: If the server process cannot be launched or connection fails.
     """
-    # 1. Define paths relative to the current script
-    # Path(__file__).resolve().parents[2] points to your project root
-    project_root = Path(__file__).resolve().parents[3]
-    server_folder = project_root / "creoson"
-    creoson_bat = server_folder / "creoson_run.bat"
+    # 1. Define paths relative to the provided server folder
+    server_folder_path = Path(server_folder)
+    creoson_bat = server_folder_path / "creoson_run.bat"
 
     # Verify the batch file exists before attempting to start
     if not creoson_bat.exists():
-        print(f"Error: Creoson executable not found at: {creoson_bat}")
-        return None
+        raise FileNotFoundError(f"Creoson executable not found at: {creoson_bat}")
 
     # 2. Launch the Creoson server process
     print(f"Launching Creoson server from: {creoson_bat}")
     try:
         subprocess.Popen(
             [str(creoson_bat)],
-            cwd=str(server_folder),
+            cwd=str(server_folder_path),
             shell=True,
             creationflags=subprocess.CREATE_NEW_CONSOLE
         )
     except Exception as e:
-        print(f"Failed to launch Creoson server process: {e}")
-        return None
+        raise RuntimeError(f"Failed to launch Creoson server process: {e}") from e
 
     # 3. Establish connection with retry logic
     client = creopyson.Client()
@@ -45,6 +49,4 @@ def connect_to_creoson(max_retries: int = 5, delay: int = 2) -> creopyson.Client
             if attempt < max_retries:
                 time.sleep(delay)
             else:
-                print("Connection to Creoson failed after several attempts.")
-
-    return None
+                raise RuntimeError("Connection to Creoson failed after several attempts.")
