@@ -5,6 +5,7 @@ parse, store, and compare version information typically formatted as
 `<name>-<major>.<minor>.<patch>`. The class supports equality and ordering
 comparisons based on the semantic structure of the versions.
 """
+
 import logging
 import re
 from collections.abc import Iterable
@@ -15,8 +16,8 @@ from basyx.aas.model import base
 
 _logger = logging.getLogger(__name__)
 
-class Version:
 
+class Version:
     """
     Represents a software version defined by a name and a semantic versioning
     scheme including major, minor, and patch numbers.
@@ -35,6 +36,7 @@ class Version:
     :ivar patch: The patch version component of the version number.
     :type patch: int
     """
+
     def __init__(self, qualifier: str) -> None:
         """
         Initialize a new Version instance by parsing a qualifier string.
@@ -47,13 +49,11 @@ class Version:
         :type qualifier: str
         :raises ValueError: If the version qualifier cannot be parsed.
         """
-        normalized_qualifier = (qualifier
-                     .replace("-", "")
-                     .replace("_", ""))
+        normalized_qualifier = qualifier.replace("-", "").replace("_", "")
         remainder = normalized_qualifier
 
         match = re.findall(r"[A-Za-z]+", normalized_qualifier)
-        self.name = ("" if match.__len__() == 0 else match[0])
+        self.name = "" if match.__len__() == 0 else match[0]
         if self.name != "":
             remainder = remainder.replace(self.name, " ").strip()
 
@@ -61,10 +61,12 @@ class Version:
         version = "" if version_match is None else version_match.group(1)
         remainder = remainder.replace(version, " ")
         if remainder.strip() != "":
-            raise ValueError(f"Invalid version qualifier: {qualifier} cannot parse {remainder}")
+            raise ValueError(
+                f"Invalid version qualifier: {qualifier} cannot parse {remainder}"
+            )
 
         versions: list[int] = [int(v) for v in version.split(".")]
-        versions.extend([0,0,0])
+        versions.extend([0, 0, 0])
 
         self.major, self.minor, self.patch = versions[0:3]
 
@@ -78,10 +80,12 @@ class Version:
         :rtype: bool
         """
         if isinstance(other, Version):
-            return (self.name == other.name
-                    and self.major == other.major
-                    and self.minor == other.minor
-                    and self.patch == other.patch)
+            return (
+                self.name == other.name
+                and self.major == other.major
+                and self.minor == other.minor
+                and self.patch == other.patch
+            )
         return False
 
     def __le__(self, other: object) -> bool:
@@ -126,11 +130,27 @@ class Version:
             return self.patch >= other.patch
         return False
 
-def get_value(element: model.Property | model.MultiLanguageProperty | model.Blob | model.File |
-                      model.ReferenceElement | model.SubmodelElementCollection | model.SubmodelElementList,
-              key: str | None = None) -> (Optional[base.ValueDataType] | Optional[base.MultiLanguageTextType] |
-                                   Optional[base.BlobType] | Optional[base.PathType] | Optional[base.Reference] |
-                                   Iterable[model.SubmodelElement] | None):
+
+def get_value(
+    element: (
+        model.Property
+        | model.MultiLanguageProperty
+        | model.Blob
+        | model.File
+        | model.ReferenceElement
+        | model.SubmodelElementCollection
+        | model.SubmodelElementList
+    ),
+    key: str | None = None,
+) -> (
+    Optional[base.ValueDataType]
+    | Optional[base.MultiLanguageTextType]
+    | Optional[base.BlobType]
+    | Optional[base.PathType]
+    | Optional[base.Reference]
+    | Iterable[model.SubmodelElement]
+    | None
+):
     """
     Return the ``value`` of a Submodel Element, optionally resolving a nested element first.
 
@@ -165,7 +185,9 @@ def get_value(element: model.Property | model.MultiLanguageProperty | model.Blob
     # BaSyx containers implement UniqueIdShortNamespace, but test doubles may only
     # provide a compatible get_referable() method.
     if key:
-        if isinstance(element, model.UniqueIdShortNamespace) or hasattr(element, "get_referable"):
+        if isinstance(element, model.UniqueIdShortNamespace) or hasattr(
+            element, "get_referable"
+        ):
             sme = element.get_referable(key)
 
     # Be defensive: some objects (e.g., collections) may not have a .value attribute.

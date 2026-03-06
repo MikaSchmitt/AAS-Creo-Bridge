@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import typing
-import traceback
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,6 +12,7 @@ if typing.TYPE_CHECKING:
 
 _logger = logging.getLogger(__name__)
 
+
 @dataclass
 class AASXEntry:
     """
@@ -21,6 +21,7 @@ class AASXEntry:
     :ivar result: The result of the AASX import.
     :type result: AASXImportResult
     """
+
     result: AASXImportResult
 
 
@@ -138,4 +139,7 @@ class AASXRegistry:
             try:
                 listener()
             except Exception as e:
-                _logger.error(f"Error in AASXRegistry listener: {e}", exc_info=traceback.format_exc())
+                _logger.error(
+                    f"Error in AASXRegistry listener: {e}",
+                    exc_info=True,
+                )

@@ -21,7 +21,9 @@ def test_import_model_into_creo_accepts_native_prt_and_asm(tmp_path: Path) -> No
     assert import_model_into_creo(file_path, "asm") is None
 
 
-def test_import_model_into_creo_accepts_supported_exchange_formats(tmp_path: Path) -> None:
+def test_import_model_into_creo_accepts_supported_exchange_formats(
+    tmp_path: Path,
+) -> None:
     file_path = tmp_path / "part.step"
     file_path.write_text("x", encoding="utf-8")
 

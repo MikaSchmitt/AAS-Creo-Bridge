@@ -36,7 +36,10 @@ See :mod:`aas_creo_bridge.adapters.aasx.types` for:
 
 from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult, import_aasx
 from aas_creo_bridge.adapters.aasx.aasx_registry import AASXRegistry
-from aas_creo_bridge.adapters.aasx.get_models import get_models_from_aas, find_model_for_app
+from aas_creo_bridge.adapters.aasx.get_models import (
+    find_model_for_app,
+    get_models_from_aas,
+)
 from aas_creo_bridge.adapters.aasx.helpers import Version, get_value
 from aas_creo_bridge.adapters.aasx.types import (
     ConsumingApplication,

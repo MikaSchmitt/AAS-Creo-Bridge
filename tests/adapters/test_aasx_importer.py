@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Literal
 
 import pytest
 
@@ -40,11 +40,14 @@ class _FakeAASXReader:
             raise self._raise_on_enter
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> bool:
+    def __exit__(self, exc_type, exc, tb) -> Literal[False]:
         return False  # don't suppress exceptions
 
     def read_into(self, *, object_store: Any, file_store: Any) -> set[str]:
-        self.read_into_called_with = {"object_store": object_store, "file_store": file_store}
+        self.read_into_called_with = {
+            "object_store": object_store,
+            "file_store": file_store,
+        }
         if self._raise_on_read_into:
             raise self._raise_on_read_into
         return set(self._identifiers)
@@ -69,7 +72,9 @@ def test_import_aasx_raises_filenotfound_for_directory(tmp_path: Path) -> None:
         importer_mod.import_aasx(folder)
 
 
-def test_import_aasx_success_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_import_aasx_success_happy_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     aasx_path = tmp_path / "sample.aasx"
     aasx_path.write_bytes(b"not-a-real-aasx-but-path-exists")
 
@@ -82,10 +87,14 @@ def test_import_aasx_success_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_pat
     fake_file_store = object()
 
     monkeypatch.setattr(importer_mod, "DictObjectStore", lambda: fake_object_store)
-    monkeypatch.setattr(importer_mod, "DictSupplementaryFileContainer", lambda: fake_file_store)
+    monkeypatch.setattr(
+        importer_mod, "DictSupplementaryFileContainer", lambda: fake_file_store
+    )
 
     # Force shell discovery to a known result (unit-testing import_aasx wiring, not shell parsing here).
-    monkeypatch.setattr(importer_mod, "_discover_shells", lambda identifiers, objects: ["DISCOVERED"])
+    monkeypatch.setattr(
+        importer_mod, "_discover_shells", lambda identifiers, objects: ["DISCOVERED"]
+    )
 
     # Patch AASXReader to our fake reader.
     def _reader_factory(path: Path) -> _FakeAASXReader:
@@ -109,13 +118,17 @@ def test_import_aasx_success_happy_path(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert result.shells == ["DISCOVERED"]
 
 
-def test_import_aasx_wraps_reader_errors_as_valueerror_and_logs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog) -> None:
+def test_import_aasx_wraps_reader_errors_as_valueerror_and_logs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog
+) -> None:
     aasx_path = tmp_path / "broken.aasx"
     aasx_path.write_bytes(b"xxx")
 
     # Keep store creation simple
     monkeypatch.setattr(importer_mod, "DictObjectStore", lambda: object())
-    monkeypatch.setattr(importer_mod, "DictSupplementaryFileContainer", lambda: object())
+    monkeypatch.setattr(
+        importer_mod, "DictSupplementaryFileContainer", lambda: object()
+    )
 
     # Make reader fail on enter (could also fail on read_into; both should be wrapped).
     def _reader_factory(path: Path) -> _FakeAASXReader:
@@ -129,7 +142,11 @@ def test_import_aasx_wraps_reader_errors_as_valueerror_and_logs(monkeypatch: pyt
 
     # Ensure we emitted an error log mentioning the path (message format is part of behavior here).
     assert any(
-        (rec.levelname == "ERROR" and "AASX import failed for" in rec.message and str(aasx_path) in rec.message)
+        (
+            rec.levelname == "ERROR"
+            and "AASX import failed for" in rec.message
+            and str(aasx_path) in rec.message
+        )
         for rec in caplog.records
     )
 
@@ -142,7 +159,9 @@ def test_discover_shells_returns_empty_when_no_identifiers() -> None:
     assert importer_mod._discover_shells(set(), _Store()) == []
 
 
-def test_discover_shells_filters_only_aas_shell_instances(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_shells_filters_only_aas_shell_instances(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # Patch the AssetAdministrationShell type check to something we control.
     class _FakeShell:
         def __init__(self) -> None:

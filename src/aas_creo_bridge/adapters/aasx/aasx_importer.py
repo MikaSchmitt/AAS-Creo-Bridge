@@ -5,10 +5,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from basyx.aas import model
-from basyx.aas.adapter import DictObjectStore, DictSupplementaryFileContainer, AASXReader
+from basyx.aas.adapter import (
+    AASXReader,
+    DictObjectStore,
+    DictSupplementaryFileContainer,
+)
 from pyecma376_2 import OPCCoreProperties
-
-
 
 _logger = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ class AASXImportResult:
     :ivar shells: List of identifiers for Asset Administration Shells found in the package.
     :type shells: list[str]
     """
+
     path: Path
     object_store: DictObjectStore
     file_store: DictSupplementaryFileContainer
@@ -67,7 +70,9 @@ def import_aasx(path: Path) -> AASXImportResult:
         thumbnail = None
 
         with AASXReader(path) as reader:
-            identifiers = reader.read_into(object_store=object_store, file_store=file_store)
+            identifiers = reader.read_into(
+                object_store=object_store, file_store=file_store
+            )
             metadata = reader.get_core_properties()
             thumbnail = reader.get_thumbnail()
 
@@ -84,7 +89,9 @@ def import_aasx(path: Path) -> AASXImportResult:
         raise ValueError(f"Not a valid AASX/zip file: {path}") from e
 
 
-def _discover_shells(identifiers: set[str], objects: model.AbstractObjectStore) -> list[str]:
+def _discover_shells(
+    identifiers: set[str], objects: model.AbstractObjectStore
+) -> list[str]:
     """
     Identify and extract Asset Administration Shell identifiers from a set of object identifiers.
 
@@ -102,6 +109,8 @@ def _discover_shells(identifiers: set[str], objects: model.AbstractObjectStore) 
     for identifier in identifiers:
         identifiable = objects.get_identifiable(identifier)
         if isinstance(identifiable, model.AssetAdministrationShell):
-            _logger.info(f"AssetAdministrationShell found {identifiable.id_short} {identifiable.id}")
+            _logger.info(
+                f"AssetAdministrationShell found {identifiable.id_short} {identifiable.id}"
+            )
             aas_shells.append(identifier)
     return aas_shells

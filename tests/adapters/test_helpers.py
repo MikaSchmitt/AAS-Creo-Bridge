@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from aas_creo_bridge.adapters.aasx.helpers import Version
 
+
 def test_version_class_constructors():
     ver = Version("1.2.3")
     assert ver.major == 1

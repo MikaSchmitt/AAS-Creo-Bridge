@@ -15,6 +15,7 @@ class ConsumingApplication:
     :ivar application_qualifier: A qualifier for the application version.
     :type application_qualifier: str
     """
+
     application_name: str
     application_version: str
     application_qualifier: str
@@ -29,9 +30,11 @@ class ConsumingApplication:
         :rtype: bool
         """
         if isinstance(other, ConsumingApplication):
-            return (self.application_name == other.application_name
-                    and self.application_version == other.application_version
-                    and self.application_qualifier == other.application_qualifier)
+            return (
+                self.application_name == other.application_name
+                and self.application_version == other.application_version
+                and self.application_qualifier == other.application_qualifier
+            )
         return False
 
     def __le__(self, other: object) -> bool:
@@ -46,8 +49,9 @@ class ConsumingApplication:
         :rtype: bool
         """
         if isinstance(other, ConsumingApplication):
-            return (self.application_name == other.application_name
-                    and Version(self.application_version) <= Version(other.application_version))
+            return self.application_name == other.application_name and Version(
+                self.application_version
+            ) <= Version(other.application_version)
         return False
 
     def __ge__(self, other: object) -> bool:
@@ -62,9 +66,11 @@ class ConsumingApplication:
         :rtype: bool
         """
         if isinstance(other, ConsumingApplication):
-            return (self.application_name == other.application_name
-                    and Version(self.application_version) >= Version(other.application_version))
+            return self.application_name == other.application_name and Version(
+                self.application_version
+            ) >= Version(other.application_version)
         return False
+
 
 @dataclass(frozen=True, slots=True)
 class FileFormat:
@@ -78,6 +84,7 @@ class FileFormat:
     :ivar format_qualifier: A qualifier for the format version.
     :type format_qualifier: str
     """
+
     format_name: str
     format_version: str
     format_qualifier: str
@@ -92,9 +99,11 @@ class FileFormat:
         :rtype: bool
         """
         if isinstance(other, FileFormat):
-            return (self.format_name == other.format_name
-                    and self.format_version == other.format_version
-                    and self.format_qualifier == other.format_qualifier)
+            return (
+                self.format_name == other.format_name
+                and self.format_version == other.format_version
+                and self.format_qualifier == other.format_qualifier
+            )
         return False
 
     def __lt__(self, other: object) -> bool:
@@ -107,8 +116,10 @@ class FileFormat:
         :rtype: bool
         """
         if isinstance(other, FileFormat):
-            return (self.format_name == other.format_name
-                    and self.format_version <= other.format_version)
+            return (
+                self.format_name == other.format_name
+                and self.format_version <= other.format_version
+            )
         return False
 
     def __gt__(self, other: object) -> bool:
@@ -121,9 +132,12 @@ class FileFormat:
         :rtype: bool
         """
         if isinstance(other, FileFormat):
-            return (self.format_name == other.format_name
-                    and self.format_version >= other.format_version)
+            return (
+                self.format_name == other.format_name
+                and self.format_version >= other.format_version
+            )
         return False
+
 
 @dataclass(frozen=True, slots=True)
 class FileMetadata:
@@ -139,10 +153,12 @@ class FileMetadata:
     :ivar file_format: Format information for the file.
     :type file_format: FileFormat
     """
+
     file_version: str
     filepath: str
     file_content_type: str
     file_format: FileFormat
+
 
 @dataclass(slots=True)
 class FileData:
@@ -154,6 +170,7 @@ class FileData:
     :ivar metadata: List of metadata entries for different versions of the file.
     :type metadata: list[FileMetadata]
     """
+
     consuming_applications: list[ConsumingApplication] = field(default_factory=list)
     metadata: list[FileMetadata] = field(default_factory=list)
 

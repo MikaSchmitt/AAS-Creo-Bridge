@@ -66,14 +66,21 @@ def _patch_model(monkeypatch):
         ModelReference=lambda key_tuple, type_: ("ModelReference", key_tuple, type_),
     )
     monkeypatch.setattr(get_models_mod, "model", fake_model)
-    monkeypatch.setattr(get_models_mod, "AssetAdministrationShell", _FakeAssetAdministrationShell)
+    monkeypatch.setattr(
+        get_models_mod, "AssetAdministrationShell", _FakeAssetAdministrationShell
+    )
 
     # Patch semantic-id constants too: they were created with the real basyx model at import time.
     monkeypatch.setattr(
         get_models_mod,
         "MODELS3D_SEMANTIC_ID",
         fake_model.ModelReference(
-            (fake_model.Key(type_=fake_model.KeyTypes.SUBMODEL, value="https://admin-shell.io/idta/Models3D/1/0"),),
+            (
+                fake_model.Key(
+                    type_=fake_model.KeyTypes.SUBMODEL,
+                    value="https://admin-shell.io/idta/Models3D/1/0",
+                ),
+            ),
             type_=fake_model.Submodel,
         ),
     )
@@ -97,7 +104,12 @@ def _patch_model(monkeypatch):
 def test_get_models_from_aas_extracts_consuming_apps_and_file_metadata(monkeypatch):
     fake_model = _patch_model(monkeypatch)
     models3d_semantic = fake_model.ModelReference(
-        (fake_model.Key(type_=fake_model.KeyTypes.SUBMODEL, value="https://admin-shell.io/idta/Models3D/1/0"),),
+        (
+            fake_model.Key(
+                type_=fake_model.KeyTypes.SUBMODEL,
+                value="https://admin-shell.io/idta/Models3D/1/0",
+            ),
+        ),
         type_=fake_model.Submodel,
     )
 
@@ -120,7 +132,9 @@ def test_get_models_from_aas_extracts_consuming_apps_and_file_metadata(monkeypat
         {
             "FileVersionId": SimpleNamespace(value="v1"),
             "FileFormat": file_format,
-            "DigitalFile": SimpleNamespace(value="model.step", content_type="application/step"),
+            "DigitalFile": SimpleNamespace(
+                value="model.step", content_type="application/step"
+            ),
         }
     )
     file_versions = _FakeSubmodelElementList([file_version])
@@ -147,11 +161,18 @@ def test_get_models_from_aas_extracts_consuming_apps_and_file_metadata(monkeypat
 def test_get_models_from_aas_skips_model_when_file_version_missing(monkeypatch):
     fake_model = _patch_model(monkeypatch)
     models3d_semantic = fake_model.ModelReference(
-        (fake_model.Key(type_=fake_model.KeyTypes.SUBMODEL, value="https://admin-shell.io/idta/Models3D/1/0"),),
+        (
+            fake_model.Key(
+                type_=fake_model.KeyTypes.SUBMODEL,
+                value="https://admin-shell.io/idta/Models3D/1/0",
+            ),
+        ),
         type_=fake_model.Submodel,
     )
 
-    file_collection = _FakeSubmodelElementCollection({"ConsumingApplication": _FakeSubmodelElementList([])})
+    file_collection = _FakeSubmodelElementCollection(
+        {"ConsumingApplication": _FakeSubmodelElementList([])}
+    )
     model3d = _FakeSubmodelElementCollection({"File": file_collection})
     model3d_list = _FakeSubmodelElementList([model3d])
     submodel = _FakeSubmodel(models3d_semantic, {"Model3D": model3d_list})
