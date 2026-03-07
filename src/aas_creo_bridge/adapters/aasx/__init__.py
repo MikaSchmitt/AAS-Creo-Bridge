@@ -39,6 +39,7 @@ from aas_creo_bridge.adapters.aasx.aasx_registry import AASXRegistry
 from aas_creo_bridge.adapters.aasx.get_models import (
     find_model_for_app,
     get_models_from_aas,
+    group_models_by_version,
 )
 from aas_creo_bridge.adapters.aasx.helpers import Version, get_value
 from aas_creo_bridge.adapters.aasx.types import (
@@ -58,6 +59,7 @@ __all__ = [
     "Version",
     "get_models_from_aas",
     "find_model_for_app",
+    "group_models_by_version"
     "get_value",
     "import_aasx",
 ]

@@ -242,27 +242,38 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
     return files
 
 
-def group_models_by_version(models: list[FileData]) -> dict[str, list[FileData]]:
+def group_models_by_version(models: list['FileData']) -> dict[str, list['FileData']]:
     """
-    Group a list of models by their file version.
+    Groups models into a dictionary where keys are file versions and values
+    are lists of FileData objects containing that specific version's metadata.
 
-    :param models: The list of models to group.
+    :param models: A list of FileData objects, each containing metadata and
+                   consuming applications.
     :type models: list[FileData]
     :return: A dictionary mapping version strings to lists of FileData objects.
     :rtype: dict[str, list[FileData]]
     """
-    raise NotImplementedError
-    return {
-        version: [m for m in models if m.metadata.file_version == version]
-        for version in set(model.metadata.file_version for model in models)
-    }
+    sorted_file_data: dict[str, list[FileData]] = {}
+
+    for m in models:
+        for meta in m.metadata:
+            version = meta.file_version
+            # Create a new FileData object containing only this specific metadata entry
+            new_entry = FileData(m.consuming_applications, [meta])
+
+            if version in sorted_file_data:
+                sorted_file_data[version].append(new_entry)
+            else:
+                sorted_file_data[version] = [new_entry]
+
+    return sorted_file_data
 
 
 def filter_model_by_app(
     models: list[FileData],
     app_required: list[ConsumingApplication],
     keep_app_not_defined=True,
-) -> list[list[FileData]]:
+) -> list[FileData]:
     """
     Filter models based on required applications. (Note: Currently incomplete).
 
@@ -275,6 +286,7 @@ def filter_model_by_app(
     :return: A filtered list of models.
     :rtype: list[list[FileData]]
     """
+
     raise NotImplementedError
 
 
