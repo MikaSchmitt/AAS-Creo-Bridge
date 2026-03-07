@@ -3,7 +3,7 @@ import creopyson
 def get_creo_bom(client: creopyson.Client, target_model: str) -> set[str]:
     """Fetch all unique component names from the assembly."""
     try:
-        bom_res = client._creoson_post("bom", "get_paths", {"file": target_model, "paths": True})
+        bom_res = client.bom_get_paths(file_=target_model, paths=True})
         unique_files: set[str] = set()
 
         def extract_recursive(node) -> None:

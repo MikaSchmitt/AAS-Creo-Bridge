@@ -11,7 +11,7 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
 
     try:
         # Set working directory
-        client._creoson_post("creo", "cd", {"dirname": str(path.parent)})
+        client.creo_cd(str(path.parent))
     except Exception as e:
         print(f"Error setting working directory: {e}")
         return
@@ -41,11 +41,11 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
             return
 
         # Execute interface import for non-native files
-        client._creoson_post("interface", "import", {
-            "file": path.name,
-            "type": file_type,
-            "new_name": path.stem  # Use filename without the last extension as model name
-        })
+        client.interface_import_file(
+            filename=path.name,
+            file_type=file_type, 
+            new_name=path.stem
+        ) # Use filename without the last extension as model name
         print(f"Successfully imported {file_type} model: {path.name}")
 
     except Exception as e:
