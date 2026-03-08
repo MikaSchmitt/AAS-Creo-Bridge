@@ -1,11 +1,11 @@
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from basyx.aas import model
 from basyx.aas.model import AssetAdministrationShell
 
 from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-from aas_creo_bridge.adapters.aasx.helpers import get_value, check_expected_model
+from aas_creo_bridge.adapters.aasx.helpers import get_value, check_expected_model, Version
 from aas_creo_bridge.adapters.aasx.types import (
     ConsumingApplication,
     FileData,
@@ -269,13 +269,38 @@ def group_models_by_version(models: list['FileData']) -> dict[str, list['FileDat
     return sorted_file_data
 
 
+def _matching_consuming_apps(m_consuming_apps, app_required,
+                             compatibility: Literal["forward", "backward", "none"]) -> bool:
+    for c_app in m_consuming_apps:
+        for r_app in app_required:
+            if (
+                    c_app.application_name == r_app.application_name
+            ):
+                match compatibility:
+                    case "forward":
+                        if Version(c_app.application_version) <= Version(r_app.application_version):
+                            return True
+                    case "backward":
+                        if Version(c_app.application_version) >= Version(r_app.application_version):
+                            return True
+                    case "none":
+                        if Version(c_app.application_version) == Version(r_app.application_version):
+                            return True
+                    case _:
+                        raise ValueError(f"Invalid compatibility mode: {compatibility}")
+    return False
+
+
 def filter_model_by_app(
         models: list[FileData],
         app_required: list[ConsumingApplication],
         keep_app_not_defined=True,
+        compatibility: Literal["forward", "backward", "none"] = "forward",
 ) -> list[FileData]:
     """
-    Filter models based on required applications. (Note: Currently incomplete).
+    Filter models based on required applications. Use keep_app_not_defined to retain models that dont specify any
+    consuming application. compatibility can either be "forward", "backward" or "none". Where forward mean an older
+    file can be opened in a newer program.
 
     :param models: The list of models to filter.
     :type models: list[FileData]
@@ -283,11 +308,19 @@ def filter_model_by_app(
     :type app_required: list[ConsumingApplication]
     :param keep_app_not_defined: Whether to keep models that don't define any application.
     :type keep_app_not_defined: bool
+    :param compatibility:
+    :type compatibility: Literal["forward", "backward", "none"]
     :return: A filtered list of models.
-    :rtype: list[list[FileData]]
+    :rtype: list[FileData]
     """
-
-    raise NotImplementedError
+    file_data: list[FileData] = []
+    for m in models:
+        if not m.consuming_applications and keep_app_not_defined:
+            file_data.append(m)
+            continue
+        if _matching_consuming_apps(m.consuming_applications, app_required, compatibility):
+            file_data.append(m)
+    return file_data
 
 
 def find_model_for_app(

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
-import pytest
-
 from types import SimpleNamespace
 
+import pytest
+
 import aas_creo_bridge.adapters.aasx.get_models as get_models_mod
-from aas_creo_bridge.adapters.aasx import group_models_by_version, FileMetadata, FileData
+from aas_creo_bridge.adapters.aasx import (
+    ConsumingApplication,
+    FileData,
+    FileMetadata,
+    group_models_by_version,
+)
 
 
 class _FakeAssetAdministrationShell:
@@ -56,6 +61,7 @@ class _FakeStore:
 
     def get_identifiable(self, _aas_id):
         return self._aas
+
 
 def _patch_model(monkeypatch):
     key_types = SimpleNamespace(SUBMODEL="SUBMODEL")
@@ -188,6 +194,7 @@ def test_get_models_from_aas_skips_model_when_file_version_missing(monkeypatch):
     else:
         assert False, "Expected ValueError"
 
+
 # Fixtures provide reusable test data
 @pytest.fixture
 def sample_metadata():
@@ -196,9 +203,11 @@ def sample_metadata():
         "v2": FileMetadata(file_version="2.0", filepath="", file_content_type="", file_format="")
     }
 
+
 def test_empty_input():
     """Verify handling of empty lists."""
     assert group_models_by_version([]) == {}
+
 
 def test_single_model_grouping(sample_metadata):
     """Verify a single model is grouped correctly by its version."""
@@ -209,6 +218,7 @@ def test_single_model_grouping(sample_metadata):
     assert len(result["1.0"]) == 1
     assert result["1.0"][0].metadata[0].file_version == "1.0"
 
+
 def test_multi_version_model(sample_metadata):
     """Verify one model with two versions splits into both groups."""
     model = FileData(["AppA"], [sample_metadata["v1"], sample_metadata["v2"]])
@@ -216,6 +226,7 @@ def test_multi_version_model(sample_metadata):
 
     assert len(result) == 2
     assert "1.0" in result and "2.0" in result
+
 
 # Parametrization allows testing multiple cases in one function
 @pytest.mark.parametrize("app_list", [
@@ -228,3 +239,106 @@ def test_app_persistence(app_list, sample_metadata):
     model = FileData(app_list, [sample_metadata["v1"]])
     result = group_models_by_version([model])
     assert result["1.0"][0].consuming_applications == app_list
+
+
+def test_filter_model_by_app_returns_only_matching_models():
+    required_app = ConsumingApplication("Creo Parametric", "10", "Creo 10")
+    matching_model = FileData(
+        consuming_applications=[ConsumingApplication("Creo Parametric", "9", "Creo 10")],
+        metadata=[],
+    )
+    non_matching_model = FileData(
+        consuming_applications=[ConsumingApplication("NX", "2206", "NX 2206")],
+        metadata=[],
+    )
+
+    result = get_models_mod.filter_model_by_app(
+        [matching_model, non_matching_model],
+        [required_app],
+    )
+
+    assert result == [matching_model]
+
+
+def test_filter_model_by_app_keeps_models_without_apps_by_default():
+    required_app = ConsumingApplication("Creo Parametric", "10", "Creo 10")
+    undefined_app_model = FileData(consuming_applications=[], metadata=[])
+    matching_model = FileData(
+        consuming_applications=[ConsumingApplication("Creo Parametric", "10", "Creo 10")],
+        metadata=[],
+    )
+
+    result = get_models_mod.filter_model_by_app(
+        [undefined_app_model, matching_model],
+        [required_app],
+    )
+
+    assert result == [undefined_app_model, matching_model]
+
+
+def test_filter_model_by_app_excludes_models_without_apps_when_disabled():
+    required_app = ConsumingApplication("Creo Parametric", "10", "Creo 10")
+    undefined_app_model = FileData(consuming_applications=[], metadata=[])
+    matching_model = FileData(
+        consuming_applications=[ConsumingApplication("Creo Parametric", "10", "Creo 10")],
+        metadata=[],
+    )
+
+    result = get_models_mod.filter_model_by_app(
+        [undefined_app_model, matching_model],
+        [required_app],
+        keep_app_not_defined=False,
+    )
+
+    assert result == [matching_model]
+
+
+@pytest.mark.parametrize(
+    ("compatibility", "matching_version", "non_matching_version", "required_version"),
+    [
+        ("forward", "9", "11", "10"),
+        ("backward", "11", "9", "10"),
+        ("none", "10", "11", "10"),
+    ],
+)
+def test_filter_model_by_app_respects_compatibility_mode(
+        compatibility, matching_version, non_matching_version, required_version
+):
+    required_app = ConsumingApplication("Creo Parametric", required_version, "Creo")
+    matching_model = FileData(
+        consuming_applications=[
+            ConsumingApplication("Creo Parametric", matching_version, "Creo")
+        ],
+        metadata=[],
+    )
+    non_matching_model = FileData(
+        consuming_applications=[
+            ConsumingApplication("Creo Parametric", non_matching_version, "Creo")
+        ],
+        metadata=[],
+    )
+
+    result = get_models_mod.filter_model_by_app(
+        [matching_model, non_matching_model],
+        [required_app],
+        compatibility=compatibility,
+        keep_app_not_defined=False,
+    )
+
+    assert result == [matching_model]
+
+
+def test_filter_model_by_app_raises_for_invalid_compatibility_mode():
+    required_app = ConsumingApplication("Creo Parametric", "10", "Creo")
+    model = FileData(
+        consuming_applications=[ConsumingApplication("Creo Parametric", "10", "Creo")],
+        metadata=[],
+    )
+
+    with pytest.raises(ValueError, match="Invalid compatibility mode"):
+        get_models_mod.filter_model_by_app(
+            [model],
+            [required_app],
+            compatibility="invalid",  # type: ignore[arg-type]
+            keep_app_not_defined=False,
+        )
