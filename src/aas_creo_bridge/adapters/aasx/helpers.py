@@ -9,12 +9,14 @@ comparisons based on the semantic structure of the versions.
 import logging
 import re
 from collections.abc import Iterable
-from typing import Optional
+from typing import Optional, TypeVar
 
 from basyx.aas import model
 from basyx.aas.model import base
 
 _logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class Version:
@@ -81,10 +83,10 @@ class Version:
         """
         if isinstance(other, Version):
             return (
-                self.name == other.name
-                and self.major == other.major
-                and self.minor == other.minor
-                and self.patch == other.patch
+                    self.name == other.name
+                    and self.major == other.major
+                    and self.minor == other.minor
+                    and self.patch == other.patch
             )
         return False
 
@@ -132,24 +134,24 @@ class Version:
 
 
 def get_value(
-    element: (
-        model.Property
-        | model.MultiLanguageProperty
-        | model.Blob
-        | model.File
-        | model.ReferenceElement
-        | model.SubmodelElementCollection
-        | model.SubmodelElementList
-    ),
-    key: str | None = None,
+        element: (
+                model.Property
+                | model.MultiLanguageProperty
+                | model.Blob
+                | model.File
+                | model.ReferenceElement
+                | model.SubmodelElementCollection
+                | model.SubmodelElementList
+        ),
+        key: str | None = None,
 ) -> (
-    Optional[base.ValueDataType]
-    | Optional[base.MultiLanguageTextType]
-    | Optional[base.BlobType]
-    | Optional[base.PathType]
-    | Optional[base.Reference]
-    | Iterable[model.SubmodelElement]
-    | None
+        Optional[base.ValueDataType]
+        | Optional[base.MultiLanguageTextType]
+        | Optional[base.BlobType]
+        | Optional[base.PathType]
+        | Optional[base.Reference]
+        | Iterable[model.SubmodelElement]
+        | None
 ):
     """
     Return the ``value`` of a Submodel Element, optionally resolving a nested element first.
@@ -186,9 +188,33 @@ def get_value(
     # provide a compatible get_referable() method.
     if key:
         if isinstance(element, model.UniqueIdShortNamespace) or hasattr(
-            element, "get_referable"
+                element, "get_referable"
         ):
             sme = element.get_referable(key)
 
     # Be defensive: some objects (e.g., collections) may not have a .value attribute.
     return getattr(sme, "value", None)
+
+
+def check_expected_model(value: object, expected_type: type[T]) -> T:
+    """
+    Validate that ``value`` is an instance of ``expected_type`` and return it
+    as the expected type.
+
+    This helper is mainly used when reading loosely typed AAS model objects and
+    narrowing them to the concrete type required by the caller.
+
+    :param value: The object to validate.
+    :type value: object
+    :param expected_type: The expected runtime type of ``value``.
+    :type expected_type: type[T]
+    :return: ``value`` cast to ``T`` if the type check succeeds.
+    :rtype: T
+    :raises ValueError: If ``value`` is not an instance of ``expected_type``.
+    """
+    if not isinstance(value, expected_type):
+        raise ValueError(
+            f"Invalid file: expected {expected_type.__name__}, got {type(value).__name__}  "
+            f"Please check the validity of the AAS."
+        )
+    return value

@@ -5,7 +5,7 @@ from basyx.aas import model
 from basyx.aas.model import AssetAdministrationShell
 
 from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-from aas_creo_bridge.adapters.aasx.helpers import get_value
+from aas_creo_bridge.adapters.aasx.helpers import get_value, check_expected_model
 from aas_creo_bridge.adapters.aasx.types import (
     ConsumingApplication,
     FileData,
@@ -56,7 +56,7 @@ MCAD_SEMANTIC_ID = model.ModelReference(
 
 
 def _extract_consuming_applications(
-    file_collection: model.SubmodelElementCollection,
+        file_collection: model.SubmodelElementCollection,
 ) -> list[ConsumingApplication]:
     """
     Extract ``ConsumingApplication`` entries from a ``File`` collection.
@@ -102,8 +102,8 @@ def _extract_consuming_applications(
 
 
 def _extract_file_versions(
-    file_collection: model.SubmodelElementCollection,
-) -> FileMetadata | None:
+        file_collection: model.SubmodelElementCollection,
+) -> list[FileMetadata]:
     """
     Extract a ``FileVersion`` entry from a ``File`` collection.
 
@@ -125,29 +125,30 @@ def _extract_file_versions(
     :return: Parsed metadata for a file version, or ``None`` if not present/unreadable.
     :rtype: FileMetadata | None
     """
-    metadata: FileMetadata = None
+    metadata: list[FileMetadata] = []
 
     try:
-        file_versions = file_collection.get_referable("FileVersion")
+        file_versions = file_collection.get_referable("FileVersion")  # Model3D/[n]/File/FileVersion (SML)
     except KeyError:
-        return None  # DigitalFile is optional
+        return []  # No SML FileVersion found
     except Exception:
         _logger.exception("Failed to read FileVersion")
-        return None
+        return []
 
     if not hasattr(file_versions, "value"):
-        return None
+        return []
 
-    for version_item in get_value(file_versions):
-        version = get_value(version_item, "FileVersionId")
-        file_format = version_item.get_referable("FileFormat")
-        format_name = get_value(file_format, "FormatName")
-        format_version = get_value(file_format, "FormatVersion")
-        format_qualifier = get_value(file_format, "FormatQualifier")
+    file_versions = check_expected_model(file_versions, model.SubmodelElementList)
+    for version_item in get_value(file_versions):  # Model3D/[n]/File/FileVersion/[n] (SMC)
+        version = get_value(version_item, "FileVersionId")  # Model3D/[n]/File/FileVersion/[n]/FileVersionId (PROP)
+        file_format = version_item.get_referable("FileFormat")  # .../FileFormat (SMC)
+        format_name = get_value(file_format, "FormatName")  # .../FileFormat/FormatName (PROP)
+        format_version = get_value(file_format, "FormatVersion")  # .../FileFormat/FormatVersion (PROP)
+        format_qualifier = get_value(file_format, "FormatQualifier")  # .../FileFormat/FormatQualifier (PROP)
 
         filepath, file_content_type = "", ""
         try:
-            digital_file = version_item.get_referable("DigitalFile")
+            digital_file = version_item.get_referable("DigitalFile")  # .../DigitalFile (FILE)
             filepath = digital_file.value
             file_content_type = digital_file.content_type
         except KeyError:
@@ -156,7 +157,7 @@ def _extract_file_versions(
             _logger.exception("Failed to read DigitalFile")
 
         try:
-            external_file = version_item.get_referable("ExternalFile")
+            external_file = version_item.get_referable("ExternalFile")  # .../ExternalFile (FILE)
             _logger.warning(
                 "AAS contains ExternalFile: %s\nExternal files are not supported yet",
                 external_file,
@@ -166,12 +167,15 @@ def _extract_file_versions(
         except Exception:
             _logger.exception("Failed to read ExternalFile")
 
-        metadata = FileMetadata(
+        if not filepath and not file_content_type:
+            continue
+
+        metadata.append(FileMetadata(
             version,
             filepath,
             file_content_type,
             FileFormat(format_name, format_version, format_qualifier),
-        )
+        ))
 
     return metadata
 
@@ -200,8 +204,7 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
     files: list[FileData] = []
 
     aas = aasx.object_store.get_identifiable(aas_id)
-    if not isinstance(aas, AssetAdministrationShell):
-        return files
+    check_expected_model(aas, AssetAdministrationShell)
 
     for submodel_ref in aas.submodel:
         try:
@@ -209,30 +212,27 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
         except KeyError:
             continue
 
-        if not isinstance(submodel, model.Submodel):
-            continue
+        check_expected_model(submodel, model.Submodel)
 
         if submodel.semantic_id == MODELS3D_SEMANTIC_ID:
-            model3d_list = submodel.get_referable("Model3D")
-            if not isinstance(model3d_list, model.SubmodelElementList):
-                continue
+            model3d_list = submodel.get_referable("Model3D")  # Model3D (SML)
+            model3d_list = check_expected_model(model3d_list, model.SubmodelElementList)
 
-            for model3d_item in model3d_list:
-                if not isinstance(model3d_item, model.SubmodelElementCollection):
-                    continue
+            for model3d_item in model3d_list:  # Model3D/[n] (SMC)
+                model3d_item = check_expected_model(model3d_item, model.SubmodelElementCollection)
 
-                file_collection = model3d_item.get_referable("File")
-                if not isinstance(file_collection, model.SubmodelElementCollection):
-                    continue
+                file_collection = model3d_item.get_referable("File")  # Model3D/[n]/File (SMC)
+                file_collection = check_expected_model(file_collection, model.SubmodelElementCollection)
 
                 file_data = FileData()
+                # Model3D/{n}/File/ConsumingApplication (SML)
                 for app in _extract_consuming_applications(file_collection):
-                    file_data.add_application(app)
-                meta = _extract_file_versions(file_collection)
-                if meta:
-                    file_data.add_metadata(meta)
+                    file_data.add_application(app)  # Model3D/[n]/File/ConsumingApplication/[n] (SMC)
+                meta_data = _extract_file_versions(file_collection)  # Model3D/[n]/File/FileVersion (SML)
+                if meta_data:
+                    for md in meta_data:
+                        file_data.add_metadata(md)  # Model3D/[n]/File/FileVersion/[n] (SMC)
                 else:
-                    _logger.warning("No FileVersion found")
                     raise ValueError("No FileVersion found")
                 files.append(file_data)
 
@@ -270,9 +270,9 @@ def group_models_by_version(models: list['FileData']) -> dict[str, list['FileDat
 
 
 def filter_model_by_app(
-    models: list[FileData],
-    app_required: list[ConsumingApplication],
-    keep_app_not_defined=True,
+        models: list[FileData],
+        app_required: list[ConsumingApplication],
+        keep_app_not_defined=True,
 ) -> list[FileData]:
     """
     Filter models based on required applications. (Note: Currently incomplete).
@@ -291,7 +291,7 @@ def filter_model_by_app(
 
 
 def find_model_for_app(
-    models: list[FileData], app_required: list[ConsumingApplication]
+        models: list[FileData], app_required: list[ConsumingApplication]
 ) -> list[list[FileData]] | None:
     """
     Filter list of models for required apps. Models that don't have a required
@@ -310,8 +310,8 @@ def find_model_for_app(
             file_data_for_app: list[FileData] = []
             for c_app in m.consuming_applications:
                 if (
-                    c_app.application_name == r_app.application_name
-                    and c_app.application_version <= r_app.application_version
+                        c_app.application_name == r_app.application_name
+                        and c_app.application_version <= r_app.application_version
                 ):
                     file_data_for_app.append(m)
                     break
@@ -321,7 +321,7 @@ def find_model_for_app(
 
 
 def find_file_for_file_format(
-    models: list[FileData], filetype: list[FileFormat]
+        models: list[FileData], filetype: list[FileFormat]
 ) -> list[FileData] | None:
     """
     Find files that match the specified file formats.
