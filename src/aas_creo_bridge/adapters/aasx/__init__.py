@@ -40,6 +40,7 @@ from aas_creo_bridge.adapters.aasx.get_models import (
     find_model_for_app,
     get_models_from_aas,
     group_models_by_version,
+    filter_model_by_app,
 )
 from aas_creo_bridge.adapters.aasx.helpers import Version, get_value
 from aas_creo_bridge.adapters.aasx.types import (
@@ -59,7 +60,8 @@ __all__ = [
     "Version",
     "get_models_from_aas",
     "find_model_for_app",
-    "group_models_by_version"
+    "group_models_by_version",
+    "filter_model_by_app",
     "get_value",
     "import_aasx",
 ]

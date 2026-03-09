@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import unittest
 from unittest.mock import MagicMock, patch
+
 
 # From the requirements:
 # - link AAS items to Creo models
@@ -13,14 +15,14 @@ class TestSynchronizationManager(unittest.TestCase):
         """
         Tests that an AAS shell can be linked to a Creo model.
         """
-        from aas_creo_bridge.app.sync_manager import SynchronizationManager, ConnectionLink
-        
+        from aas_creo_bridge.app.sync_manager import SynchronizationManager
+
         manager = SynchronizationManager()
         aas_shell_id = "aas_123"
         creo_model_name = "part_abc"
-        
+
         manager.link(aas_shell_id, creo_model_name)
-        
+
         links = manager.list_links()
         self.assertEqual(len(links), 1)
         self.assertEqual(links[0].aas_shell_id, aas_shell_id)
@@ -68,14 +70,14 @@ class TestSynchronizationManager(unittest.TestCase):
         self.assertEqual(links[0].aas_shell_id, "aas_1")
         self.assertEqual(links[0].creo_model_name, "new_model")
 
-    @patch("aas_creo_bridge.app.sync_manager.import_model_into_creo")
+    @patch("aas_creo_bridge.adapters.creo.model_importer.import_model_into_creo")
     @patch("aas_creo_bridge.app.sync_manager.get_models_from_aas")
     @patch("aas_creo_bridge.app.sync_manager.get_aasx_registry")
     def test_sync_aas_to_creo_fallback_path_uses_registry_and_adapters(
-        self,
-        registry_factory: MagicMock,
-        get_models_from_aas_mock: MagicMock,
-        import_model_into_creo_mock: MagicMock,
+            self,
+            registry_factory: MagicMock,
+            get_models_from_aas_mock: MagicMock,
+            import_model_into_creo_mock: MagicMock,
     ) -> None:
         from aas_creo_bridge.app.sync_manager import SynchronizationManager
 

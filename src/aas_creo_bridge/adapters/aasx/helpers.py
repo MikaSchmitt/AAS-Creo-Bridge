@@ -54,10 +54,11 @@ class Version:
         normalized_qualifier = qualifier.replace("-", "").replace("_", "")
         remainder = normalized_qualifier
 
-        match = re.findall(r"[A-Za-z]+", normalized_qualifier)
+        match = re.findall(r"[A-Za-z\s]+", normalized_qualifier)
         self.name = "" if match.__len__() == 0 else match[0]
         if self.name != "":
             remainder = remainder.replace(self.name, " ").strip()
+        self.name = self.name.strip()
 
         version_match = re.match(r"(\d+(\.*\d+){0,2})", remainder)
         version = "" if version_match is None else version_match.group(1)
@@ -131,6 +132,9 @@ class Version:
                 return self.minor >= other.minor
             return self.patch >= other.patch
         return False
+
+    def to_tuple(self):
+        tuple(map(str, [self.name, self.major, self.minor, self.patch]))
 
 
 def get_value(
