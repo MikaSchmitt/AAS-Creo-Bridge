@@ -46,11 +46,15 @@ class Version:
         The qualifier string is expected to be in a format like `<name>-<major>.<minor>.<patch>`,
         but it can also be just a version number or a name followed by a version number.
         Dashes and underscores are removed during normalization.
+        If the qualifier is None, it defaults to "0.0.0".
 
         :param qualifier: The version qualifier string to parse.
         :type qualifier: str
         :raises ValueError: If the version qualifier cannot be parsed.
         """
+        if qualifier is None:
+            qualifier = "0.0.0"
+
         normalized_qualifier = qualifier.replace("-", "").replace("_", "")
         remainder = normalized_qualifier
 
