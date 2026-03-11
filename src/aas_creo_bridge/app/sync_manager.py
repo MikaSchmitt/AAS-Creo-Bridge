@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
 from aas_creo_bridge.adapters.aasx.get_models import get_models_from_aas, ConsumingApplication, find_model_for_app
-from aas_creo_bridge.adapters.creo.model_importer import import_model_into_creo
+from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
 from aas_creo_bridge.app.context import get_aasx_registry
 
 if TYPE_CHECKING:
