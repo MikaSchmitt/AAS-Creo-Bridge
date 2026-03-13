@@ -1,4 +1,4 @@
-from pathlib import Path
+
 
 def import_model_into_creo(path:Path, source_format:str, target_format:str = "") -> None:
     if not path.exists():
