@@ -90,7 +90,7 @@ def import_aasx(path: Path) -> AASXImportResult:
 
 
 def _discover_shells(
-    identifiers: set[str], objects: model.AbstractObjectStore
+        identifiers: set[str], objects: model.AbstractObjectStore
 ) -> list[str]:
     """
     Identify and extract Asset Administration Shell identifiers from a set of object identifiers.

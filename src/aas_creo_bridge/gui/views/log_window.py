@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from aas_creo_bridge.app.context import get_logger
-from aas_creo_bridge.app.logging import LogEntry, LogLevel
-
 
 class LogWindow:
     def __init__(self, root: tk.Tk, *, title: str = "Log") -> None:
@@ -17,8 +14,9 @@ class LogWindow:
         return self._win is not None and self._win.winfo_exists()
 
     def show(self, lines: list[str]) -> None:
-        if self.is_open():
-            self._win.lift()
+        existing_win = self._win
+        if existing_win is not None and existing_win.winfo_exists():
+            existing_win.tkraise()
             return
 
         win = tk.Toplevel(self._root)

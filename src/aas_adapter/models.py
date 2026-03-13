@@ -1,6 +1,127 @@
+import re
 from dataclasses import dataclass, field
 
-from aas_creo_bridge.adapters.aasx.helpers import Version
+
+class Version:
+    """
+    Represents a software version defined by a name and a semantic versioning
+    scheme including major, minor, and patch numbers.
+
+    This class allows parsing, comparing, and normalizing software version
+    qualifiers. It supports equality and relational comparisons to determine
+    the ordering of versions.
+
+    :ivar name: The name associated with the version, typically representing
+        the software or library name.
+    :type name: str
+    :ivar major: The major version component of the version number.
+    :type major: int
+    :ivar minor: The minor version component of the version number.
+    :type minor: int
+    :ivar patch: The patch version component of the version number.
+    :type patch: int
+    """
+
+    def __init__(self, qualifier: str) -> None:
+        """
+        Initialize a new Version instance by parsing a qualifier string.
+
+        The qualifier string is expected to be in a format like `<name>-<major>.<minor>.<patch>`,
+        but it can also be just a version number or a name followed by a version number.
+        Dashes and underscores are removed during normalization.
+        If the qualifier is None, it defaults to "0.0.0".
+
+        :param qualifier: The version qualifier string to parse.
+        :type qualifier: str
+        :raises ValueError: If the version qualifier cannot be parsed.
+        """
+        if qualifier is None or qualifier == "":
+            qualifier = "0.0.0"
+
+        normalized_qualifier = qualifier.replace("-", "").replace("_", "")
+        remainder = normalized_qualifier
+
+        match = re.findall(r"[A-Za-z\s]+", normalized_qualifier)
+        self.name = "" if match.__len__() == 0 else match[0]
+        if self.name != "":
+            remainder = remainder.replace(self.name, " ").strip()
+        self.name = self.name.strip()
+
+        version_match = re.match(r"(\d+(\.*\d+){0,2})", remainder)
+        version = "" if version_match is None else version_match.group(1)
+        remainder = remainder.replace(version, " ")
+        if remainder.strip() != "":
+            raise ValueError(
+                f"Invalid version qualifier: {qualifier} cannot parse {remainder}"
+            )
+
+        versions: list[int] = [int(v) for v in version.split(".")]
+        versions.extend([0, 0, 0])
+
+        self.major, self.minor, self.patch = versions[0:3]
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Check if two Version instances are equal.
+
+        :param other: The other object to compare with.
+        :type other: object
+        :return: True if both instances are equal, False otherwise.
+        :rtype: bool
+        """
+        if isinstance(other, Version):
+            return (
+                    self.name == other.name
+                    and self.major == other.major
+                    and self.minor == other.minor
+                    and self.patch == other.patch
+            )
+        return False
+
+    def __le__(self, other: object) -> bool:
+        """
+        Check if this version is less than or equal to another.
+
+        Comparison is performed component-wise: name, major, minor, then patch.
+
+        :param other: The other version to compare with.
+        :type other: object
+        :return: True if this version is less than or equal to other, False otherwise.
+        :rtype: bool
+        """
+        if isinstance(other, Version):
+            if self.name != other.name:
+                return False
+            if self.major != other.major:
+                return self.major <= other.major
+            if self.minor != other.minor:
+                return self.minor <= other.minor
+            return self.patch <= other.patch
+        return False
+
+    def __ge__(self, other: object) -> bool:
+        """
+        Check if this version is greater than or equal to another.
+
+        Comparison is performed component-wise: name, major, minor, then patch.
+
+        :param other: The other version to compare with.
+        :type other: object
+        :return: True if this version is greater than or equal to other, False otherwise.
+        :rtype: bool
+        """
+        if isinstance(other, Version):
+            if self.name != other.name:
+                return False
+            if self.major != other.major:
+                return self.major >= other.major
+            if self.minor != other.minor:
+                return self.minor >= other.minor
+            return self.patch >= other.patch
+        return False
+
+    def to_tuple(self):
+        return self.name, self.major, self.minor, self.patch
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,7 +136,6 @@ class ConsumingApplication:
     :ivar application_qualifier: A qualifier for the application version.
     :type application_qualifier: str
     """
-
     application_name: str
     application_version: str
     application_qualifier: str
@@ -31,9 +151,9 @@ class ConsumingApplication:
         """
         if isinstance(other, ConsumingApplication):
             return (
-                self.application_name == other.application_name
-                and self.application_version == other.application_version
-                and self.application_qualifier == other.application_qualifier
+                    self.application_name == other.application_name
+                    and self.application_version == other.application_version
+                    and self.application_qualifier == other.application_qualifier
             )
         return False
 
@@ -84,7 +204,6 @@ class FileFormat:
     :ivar format_qualifier: A qualifier for the format version.
     :type format_qualifier: str
     """
-
     format_name: str
     format_version: str
     format_qualifier: str
@@ -100,9 +219,9 @@ class FileFormat:
         """
         if isinstance(other, FileFormat):
             return (
-                self.format_name == other.format_name
-                and self.format_version == other.format_version
-                and self.format_qualifier == other.format_qualifier
+                    self.format_name == other.format_name
+                    and self.format_version == other.format_version
+                    and self.format_qualifier == other.format_qualifier
             )
         return False
 
@@ -117,8 +236,8 @@ class FileFormat:
         """
         if isinstance(other, FileFormat):
             return (
-                self.format_name == other.format_name
-                and self.format_version <= other.format_version
+                    self.format_name == other.format_name
+                    and self.format_version <= other.format_version
             )
         return False
 
@@ -133,8 +252,8 @@ class FileFormat:
         """
         if isinstance(other, FileFormat):
             return (
-                self.format_name == other.format_name
-                and self.format_version >= other.format_version
+                    self.format_name == other.format_name
+                    and self.format_version >= other.format_version
             )
         return False
 
@@ -153,7 +272,6 @@ class FileMetadata:
     :ivar file_format: Format information for the file.
     :type file_format: FileFormat
     """
-
     file_version: str
     filepath: str
     file_content_type: str
@@ -170,7 +288,6 @@ class FileData:
     :ivar metadata: List of metadata entries for different versions of the file.
     :type metadata: list[FileMetadata]
     """
-
     consuming_applications: list[ConsumingApplication] = field(default_factory=list)
     metadata: list[FileMetadata] = field(default_factory=list)
 

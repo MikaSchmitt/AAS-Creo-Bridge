@@ -1,12 +1,12 @@
 import logging
-from typing import Any, Literal
+from typing import Any
 
 from basyx.aas import model
 from basyx.aas.model import AssetAdministrationShell
 
-from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-from aas_creo_bridge.adapters.aasx.helpers import get_value, check_expected_model, Version
-from aas_creo_bridge.adapters.aasx.types import (
+from aas_adapter.helpers import get_value, check_expected_model, mcad_doc_name_to_cadenas_format
+from aas_adapter.importer import AASXImportResult
+from aas_adapter.models import (
     ConsumingApplication,
     FileData,
     FileFormat,
@@ -21,7 +21,7 @@ def _get_element(obj: Any, prop: str) -> Any:
     Get the value of a property from an object, or its id_short if it's a dict.
 
     This is an internal helper used while traversing BaSyx model objects.
-    Prefer :func:`aas_creo_bridge.adapters.aasx.helpers.get_value` for reading
+    Prefer :func:`aas_creo_bridge.adapters.aas_adapter.helpers.get_value` for reading
     SubmodelElement values.
 
     :param obj: The object to extract the value from.
@@ -52,6 +52,15 @@ MCAD_SEMANTIC_ID = model.ModelReference(
         ),
     ),
     type_=model.Submodel,
+)
+
+MCAD_DOCUMENT_SEMANTIC_ID = model.ExternalReference(
+    (
+        model.Key(
+            type_=model.KeyTypes.GLOBAL_REFERENCE,
+            value="0173-1#02-ABI500#001/0173-1#01-AHF579#001*01",
+        ),
+    ),
 )
 
 
@@ -238,138 +247,32 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
 
         if submodel.semantic_id == MCAD_SEMANTIC_ID:
             _logger.warning("MCAD is not supported yet")
+            for element in submodel:
+                if element.semantic_id != MCAD_DOCUMENT_SEMANTIC_ID:
+                    continue
+                check_expected_model(element, model.SubmodelElementCollection)
+                doc_class = element.get_referable("DocumentClassification")
+                doc_class = check_expected_model(doc_class, model.SubmodelElementCollection)
+                if not (get_value(doc_class, "ClassIdentifyer") == "02-02"
+                        and get_value(doc_class, "ClassificationSystem") == "VDI2770:2020"):
+                    continue
+
+                doc_version = element.get_referable("DocumentVersion")
+                check_expected_model(doc_version, model.SubmodelElementCollection)
+
+                version = get_value(doc_version, "DocumentVersion")
+                path = doc_version.get_referable("DigitalFile").value
+                content_type = doc_version.get_referable("DigitalFile").content_type
+                doc_name = doc_version.get_referable("DocumentName").value.get("en")
+                file_format = mcad_doc_name_to_cadenas_format(doc_name)
+
+                file_data = FileData()
+                file_data.add_metadata(FileMetadata(
+                    version,
+                    path,
+                    content_type,
+                    file_format,
+                ))
+                files.append(file_data)
 
     return files
-
-
-def group_models_by_version(models: list['FileData']) -> dict[str, list['FileData']]:
-    """
-    Groups models into a dictionary where keys are file versions and values
-    are lists of FileData objects containing that specific version's metadata.
-
-    :param models: A list of FileData objects, each containing metadata and
-                   consuming applications.
-    :type models: list[FileData]
-    :return: A dictionary mapping version strings to lists of FileData objects.
-    :rtype: dict[str, list[FileData]]
-    """
-    sorted_file_data: dict[str, list[FileData]] = {}
-
-    for m in models:
-        for meta in m.metadata:
-            version = meta.file_version
-            # Create a new FileData object containing only this specific metadata entry
-            new_entry = FileData(m.consuming_applications, [meta])
-
-            if version in sorted_file_data:
-                sorted_file_data[version].append(new_entry)
-            else:
-                sorted_file_data[version] = [new_entry]
-
-    return sorted_file_data
-
-
-def _matching_consuming_apps(m_consuming_apps, app_required,
-                             compatibility: Literal["forward", "backward", "none"]) -> bool:
-    for c_app in m_consuming_apps:
-        for r_app in app_required:
-            if (
-                    c_app.application_name == r_app.application_name
-            ):
-                match compatibility:
-                    case "forward":
-                        if Version(c_app.application_version) <= Version(r_app.application_version):
-                            return True
-                    case "backward":
-                        if Version(c_app.application_version) >= Version(r_app.application_version):
-                            return True
-                    case "none":
-                        if Version(c_app.application_version) == Version(r_app.application_version):
-                            return True
-                    case _:
-                        raise ValueError(f"Invalid compatibility mode: {compatibility}")
-    return False
-
-
-def filter_model_by_app(
-        models: list[FileData],
-        app_required: list[ConsumingApplication],
-        keep_app_not_defined=True,
-        compatibility: Literal["forward", "backward", "none"] = "forward",
-) -> list[FileData]:
-    """
-    Filter models based on required applications. Use keep_app_not_defined to retain models that dont specify any
-    consuming application. compatibility can either be "forward", "backward" or "none". Where forward mean an older
-    file can be opened in a newer program.
-
-    :param models: The list of models to filter.
-    :type models: list[FileData]
-    :param app_required: List of required applications.
-    :type app_required: list[ConsumingApplication]
-    :param keep_app_not_defined: Whether to keep models that don't define any application.
-    :type keep_app_not_defined: bool
-    :param compatibility:
-    :type compatibility: Literal["forward", "backward", "none"]
-    :return: A filtered list of models.
-    :rtype: list[FileData]
-    """
-    file_data: list[FileData] = []
-    for m in models:
-        if not m.consuming_applications and keep_app_not_defined:
-            file_data.append(m)
-            continue
-        if _matching_consuming_apps(m.consuming_applications, app_required, compatibility):
-            file_data.append(m)
-    return file_data
-
-
-def find_model_for_app(
-        models: list[FileData], app_required: list[ConsumingApplication]
-) -> list[list[FileData]] | None:
-    """
-    Filter list of models for required apps. Models that don't have a required
-    application specified are skipped.
-
-    :param models: a list of FileData of all the models to search through.
-    :type models: list[FileData]
-    :param app_required: a list of ConsumingApplication to search for ordered by priority.
-    :type app_required: list[ConsumingApplication]
-    :return: a list of lists of FileData for models that have at least one of the required applications grouped by application and ordered by priority.
-    :rtype: list[list[FileData]] | None
-    """
-    file_data: list[list[FileData]] = []
-    for r_app in app_required:
-        for m in models:
-            file_data_for_app: list[FileData] = []
-            for c_app in m.consuming_applications:
-                if (
-                        c_app.application_name == r_app.application_name
-                        and c_app.application_version <= r_app.application_version
-                ):
-                    file_data_for_app.append(m)
-                    break
-            if file_data_for_app:
-                file_data.append(file_data_for_app)
-    return file_data
-
-
-def find_file_for_file_format(
-        models: list[FileData], filetype: list[FileFormat]
-) -> list[FileData] | None:
-    """
-    Find files that match the specified file formats.
-
-    :param models: List of models to search in.
-    :type models: list[FileData]
-    :param filetype: List of file formats to search for.
-    :type filetype: list[FileFormat]
-    :return: A list of models that match any of the specified file formats.
-    :rtype: list[FileData] | None
-    """
-    file_data: list[FileData] = []
-    for m in models:
-        for meta in m.metadata:
-            if meta.file_format == filetype:
-                file_data.append(m)
-                break
-    return file_data

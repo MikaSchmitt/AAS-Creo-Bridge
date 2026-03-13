@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aas_creo_bridge.adapters.aasx.helpers import Version
+from aas_adapter import Version
 
 
 def test_version_class_constructors():

@@ -5,7 +5,7 @@ import typing
 from dataclasses import dataclass
 from pathlib import Path
 
-from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
+from aas_adapter.importer import AASXImportResult
 
 if typing.TYPE_CHECKING:
     from typing import Callable

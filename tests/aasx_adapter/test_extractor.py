@@ -4,12 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
-import aas_creo_bridge.adapters.aasx.get_models as get_models_mod
-from aas_creo_bridge.adapters.aasx import (
+import aas_adapter.extractor as extractor_mod
+from aas_adapter import (
     ConsumingApplication,
     FileData,
     FileMetadata,
     group_models_by_version,
+    get_models_from_aas,
+    filter_model_by_app,
 )
 
 
@@ -73,14 +75,14 @@ def _patch_model(monkeypatch):
         Key=lambda type_, value: (type_, value),
         ModelReference=lambda key_tuple, type_: ("ModelReference", key_tuple, type_),
     )
-    monkeypatch.setattr(get_models_mod, "model", fake_model)
+    monkeypatch.setattr(extractor_mod, "model", fake_model)
     monkeypatch.setattr(
-        get_models_mod, "AssetAdministrationShell", _FakeAssetAdministrationShell
+        extractor_mod, "AssetAdministrationShell", _FakeAssetAdministrationShell
     )
 
     # Patch semantic-id constants too: they were created with the real basyx model at import time.
     monkeypatch.setattr(
-        get_models_mod,
+        extractor_mod,
         "MODELS3D_SEMANTIC_ID",
         fake_model.ModelReference(
             (
@@ -93,7 +95,7 @@ def _patch_model(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        get_models_mod,
+        extractor_mod,
         "MCAD_SEMANTIC_ID",
         fake_model.ModelReference(
             (
@@ -155,7 +157,7 @@ def test_get_models_from_aas_extracts_consuming_apps_and_file_metadata(monkeypat
     aas = _FakeAssetAdministrationShell([_FakeSmRef(submodel)])
     aasx = SimpleNamespace(object_store=_FakeStore(aas))
 
-    out = get_models_mod.get_models_from_aas(aasx, "aas_1")
+    out = get_models_from_aas(aasx, "aas_1")
 
     assert out is not None
     assert len(out) == 1
@@ -187,12 +189,8 @@ def test_get_models_from_aas_skips_model_when_file_version_missing(monkeypatch):
     aas = _FakeAssetAdministrationShell([_FakeSmRef(submodel)])
     aasx = SimpleNamespace(object_store=_FakeStore(aas))
 
-    try:
-        out = get_models_mod.get_models_from_aas(aasx, "aas_1")
-    except ValueError:
-        assert True
-    else:
-        assert False, "Expected ValueError"
+    with pytest.raises(ValueError, match="No FileVersion found"):
+        get_models_from_aas(aasx, "aas_1")
 
 
 # Fixtures provide reusable test data
@@ -252,7 +250,7 @@ def test_filter_model_by_app_returns_only_matching_models():
         metadata=[],
     )
 
-    result = get_models_mod.filter_model_by_app(
+    result = filter_model_by_app(
         [matching_model, non_matching_model],
         [required_app],
     )
@@ -268,7 +266,7 @@ def test_filter_model_by_app_keeps_models_without_apps_by_default():
         metadata=[],
     )
 
-    result = get_models_mod.filter_model_by_app(
+    result = filter_model_by_app(
         [undefined_app_model, matching_model],
         [required_app],
     )
@@ -284,7 +282,7 @@ def test_filter_model_by_app_excludes_models_without_apps_when_disabled():
         metadata=[],
     )
 
-    result = get_models_mod.filter_model_by_app(
+    result = filter_model_by_app(
         [undefined_app_model, matching_model],
         [required_app],
         keep_app_not_defined=False,
@@ -318,7 +316,7 @@ def test_filter_model_by_app_respects_compatibility_mode(
         metadata=[],
     )
 
-    result = get_models_mod.filter_model_by_app(
+    result = filter_model_by_app(
         [matching_model, non_matching_model],
         [required_app],
         compatibility=compatibility,
@@ -336,7 +334,7 @@ def test_filter_model_by_app_raises_for_invalid_compatibility_mode():
     )
 
     with pytest.raises(ValueError, match="Invalid compatibility mode"):
-        get_models_mod.filter_model_by_app(
+        filter_model_by_app(
             [model],
             [required_app],
             compatibility="invalid",  # type: ignore[arg-type]

@@ -1,0 +1,69 @@
+import io
+import re
+import zipfile
+from dataclasses import dataclass
+from pathlib import Path
+
+from aas_adapter.importer import AASXImportResult
+from aas_adapter.models import FileFormat, FileData
+
+
+@dataclass(frozen=True)
+class PreparedModelFile:
+    extracted_path: Path
+    format: FileFormat
+
+
+def materialize_model_file(aas_reg_entry: AASXImportResult, model: FileData,
+                           out_dir: Path) -> PreparedModelFile | None:
+    for meta in model.metadata:
+        print(f"{meta.filepath}\n"
+              f"content type: {meta.file_content_type}\n"
+              f"version: {meta.file_version}\n"
+              f"file format: {meta.file_format}")
+
+        target_file: Path | None = None
+
+        if not meta.filepath in aas_reg_entry.file_store:
+            continue
+
+        if meta.file_content_type == "application/zip":
+            zip_buf = io.BytesIO()
+            aas_reg_entry.file_store.write_file(meta.filepath, zip_buf)
+            zip_buf.seek(0)
+
+            found_any = False
+            with zipfile.ZipFile(zip_buf, "r") as zf:
+
+                for info in zf.infolist():
+                    if info.is_dir():
+                        continue
+                    name = info.filename
+                    lower = name.lower()
+                    if lower.endswith(".txt"):
+                        continue
+                    if lower.endswith(".pdf"):
+                        continue
+                    elif re.search(r"\.[A-Za-z]+.*[0-9]*", lower):
+                        found_any = True
+                        target_name = Path(name).name
+                        target_file = out_dir / target_name
+                        with zf.open(info, "r") as src, target_file.open("wb") as dst:
+                            dst.write(src.read())
+                        print(f"  Found and saved file from zip: {target_file.resolve()}")
+                    else:
+                        continue
+            if not found_any:
+                print("  Zip processed in-memory, but no .stp/.step files were found inside.")
+
+        elif (meta.file_content_type == "application/step" or
+              meta.file_content_type == "application/octet-stream" or
+              "model/" in meta.file_content_type):
+            target_file = out_dir / Path(meta.filepath).name
+            with target_file.open("wb") as out:
+                aas_reg_entry.file_store.write_file(meta.filepath, out)
+            print(f"  Extracted to: {target_file.resolve()}")
+
+        if target_file is not None:
+            return PreparedModelFile(target_file, meta.file_format)
+    return None
