@@ -42,12 +42,12 @@ def _matching_consuming_apps(m_consuming_apps, app_required,
             ):
                 match compatibility:
                     case "forward":
-                        # Forward compatibility: older model/app versions are allowed for a newer requirement.
-                        if Version(c_app.application_version) <= Version(r_app.application_version):
+                        # Forward compatibility: older app can open newer file versions.
+                        if Version(c_app.application_version) >= Version(r_app.application_version):
                             return True
                     case "backward":
-                        # Backward compatibility: newer model/app versions are allowed for an older requirement.
-                        if Version(c_app.application_version) >= Version(r_app.application_version):
+                        # Backward compatibility: newer app can open older file versions.
+                        if Version(c_app.application_version) <= Version(r_app.application_version):
                             return True
                     case "none":
                         if Version(c_app.application_version) == Version(r_app.application_version):
@@ -99,14 +99,6 @@ def find_model_for_app(
         models: list[FileData], app_required: list[ConsumingApplication]
 ) -> list[list[FileData]] | None:
     """
-    .. deprecated:: Use :func:`filter_model_by_app` instead.
-    """
-    warnings.warn(
-        "find_model_for_app is deprecated; use filter_model_by_app instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
     Filter list of models for required apps. Models that don't have a required
     application specified are skipped.
 
@@ -118,9 +110,9 @@ def find_model_for_app(
     :rtype: list[list[FileData]] | None
     """
     warnings.warn(
-        "old_function is deprecated; use new_function instead",
-        category=DeprecationWarning,
-        stacklevel=2
+        "find_model_for_app is deprecated; use filter_model_by_app instead",
+        DeprecationWarning,
+        stacklevel=2,
     )
 
     file_data: list[list[FileData]] = []

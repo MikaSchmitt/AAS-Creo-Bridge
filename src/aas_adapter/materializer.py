@@ -1,9 +1,9 @@
 import io
+import logging
 import re
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-import logging
 
 from aas_adapter.importer import AASXImportResult
 from aas_adapter.models import FileFormat, FileData
@@ -46,21 +46,31 @@ def materialize_model_file(aas_reg_entry: AASXImportResult, model: FileData,
                         continue
                     name = info.filename
                     lower = name.lower()
-                    if lower.endswith(".txt"):
-                        continue
-                    if lower.endswith(".pdf"):
-                        continue
-                    elif re.search(r"\.[A-Za-z]+.*[0-9]*", lower):
-                        found_any = True
-                        target_name = Path(name).name
-                        target_file = out_dir / target_name
-                        with zf.open(info, "r") as src, target_file.open("wb") as dst:
-                            dst.write(src.read())
-                        logger.info("  Found and saved file from zip: %s", target_file.resolve())
-                    else:
-                        continue
+
+                    # cross-check file ending with expected file format
+                    match meta.file_format.format_name:
+                        case "Creo Parametric":
+                            if not re.search(r"\.(prt|asm)(\.\d+)?", lower):
+                                continue
+                        case "STEP":
+                            if not re.search(r"\.ste?p", lower):
+                                continue
+                        case "IGES":
+                            if not re.search(r"\.ige?s", lower):
+                                continue
+                        case _:
+                            logger.warning("Unknown file format: %s", meta.file_format.format_name)
+                            continue
+
+                    found_any = True
+                    target_name = Path(name).name
+                    target_file = out_dir / target_name
+                    with zf.open(info, "r") as src, target_file.open("wb") as dst:
+                        dst.write(src.read())
+                    logger.info("  Found and saved file from zip: %s", target_file.resolve())
+
             if not found_any:
-                logger.info("  Zip processed in-memory, but no .stp/.step files were found inside.")
+                logger.info("  Zip processed in-memory, but no 3d model files were found inside.")
 
         elif (meta.file_content_type == "application/step" or
               meta.file_content_type == "application/octet-stream" or

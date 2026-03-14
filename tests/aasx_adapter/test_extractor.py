@@ -294,8 +294,8 @@ def test_filter_model_by_app_excludes_models_without_apps_when_disabled():
 @pytest.mark.parametrize(
     ("compatibility", "matching_version", "non_matching_version", "required_version"),
     [
-        ("forward", "9", "11", "10"),
-        ("backward", "11", "9", "10"),
+        ("backward", "9", "11", "10"),
+        ("forward", "11", "9", "10"),
         ("none", "10", "11", "10"),
     ],
 )

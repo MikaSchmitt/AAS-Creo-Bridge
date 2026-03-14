@@ -246,7 +246,6 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
                 files.append(file_data)
 
         if submodel.semantic_id == MCAD_SEMANTIC_ID:
-            _logger.warning("MCAD is not supported yet")
             for element in submodel:
                 if element.semantic_id != MCAD_DOCUMENT_SEMANTIC_ID:
                     continue
