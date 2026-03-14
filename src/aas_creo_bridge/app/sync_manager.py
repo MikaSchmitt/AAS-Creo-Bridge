@@ -62,19 +62,28 @@ class SynchronizationManager:
             _logger.error("No AASX registry entry found for AAS shell %s", aas_shell_id)
             return None
 
-        models = get_models_from_aas(aasx, aas_shell_id)
-        best = select_best_model(models, self._application, self._file_format)
+        try:
+            models = get_models_from_aas(aasx, aas_shell_id)
+            best = select_best_model(models, self._application, self._file_format)
 
-        if best is None:
-            _logger.warning("No suitable model found for AAS shell %s", aas_shell_id)
+            if best is None:
+                _logger.warning("No suitable model found for AAS shell %s", aas_shell_id)
+                return None
+
+            prepared = materialize_model_file(aasx, best, self.out_dir)
+            if prepared is None:
+                _logger.warning("Model materialization returned no result for AAS shell %s", aas_shell_id)
+                return None
+
+            _logger.info("Prepared model extracted to %s", prepared.extracted_path)
+        except ValueError as exc:
+            _logger.error(
+                "Failed to synchronize AAS shell %s to Creo due to invalid AAS data: %s",
+                aas_shell_id,
+                exc,
+            )
+            _logger.debug("Exception while syncing AAS shell %s", aas_shell_id, exc_info=True)
             return None
-
-        prepared = materialize_model_file(aasx, best, self.out_dir)
-        if prepared is None:
-            _logger.warning("Model materialization returned no result for AAS shell %s", aas_shell_id)
-            return None
-
-        _logger.info("Prepared model extracted to %s", prepared.extracted_path)
 
 
 # Backwards-compatible name expected by app.context.init_sync_manager()

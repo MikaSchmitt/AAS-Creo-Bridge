@@ -1,9 +1,16 @@
-"""A module for representing and comparing software version identifiers.
+"""Helper utilities for working with AAS elements and Cadenas file formats.
 
-This module defines the `Version` class, which provides functionality to
-parse, store, and compare version information typically formatted as
-`<name>-<major>.<minor>.<patch>`. The class supports equality and ordering
-comparisons based on the semantic structure of the versions.
+This module provides:
+
+* Convenience functions for reading and validating values from AAS
+  submodel elements (such as :func:`get_value` and
+  :func:`check_expected_model`).
+* Helper functions for retrieving and caching the Cadenas format list over
+  HTTP, and for mapping MCAD document names to :class:`~aas_adapter.models.FileFormat`
+  instances.
+
+These helpers are used throughout the AAS adapter to centralize common
+logic related to AAS model handling and Cadenas format resolution.
 """
 
 import logging

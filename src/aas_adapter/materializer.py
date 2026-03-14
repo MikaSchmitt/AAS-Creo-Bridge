@@ -2,6 +2,7 @@ import io
 import logging
 import re
 import zipfile
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -66,7 +67,7 @@ def materialize_model_file(aas_reg_entry: AASXImportResult, model: FileData,
                     target_name = Path(name).name
                     target_file = out_dir / target_name
                     with zf.open(info, "r") as src, target_file.open("wb") as dst:
-                        dst.write(src.read())
+                        shutil.copyfileobj(src, dst, length=1024 * 1024)
                     logger.info("  Found and saved file from zip: %s", target_file.resolve())
 
             if not found_any:

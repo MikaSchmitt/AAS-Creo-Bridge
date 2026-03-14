@@ -23,7 +23,7 @@ def group_models_by_version(models: list['FileData']) -> dict[str, list['FileDat
     for m in models:
         for meta in m.metadata:
             version = meta.file_version
-            new_entry = FileData(m.consuming_applications, [meta])
+            new_entry = FileData(list(m.consuming_applications), [meta])
 
             if version in sorted_file_data:
                 sorted_file_data[version].append(new_entry)
@@ -122,7 +122,7 @@ def find_model_for_app(
             for c_app in m.consuming_applications:
                 if (
                         c_app.application_name == r_app.application_name
-                        and c_app.application_version <= r_app.application_version
+                        and Version(c_app.application_version) <= Version(r_app.application_version)
                 ):
                     file_data_for_app.append(m)
                     break
