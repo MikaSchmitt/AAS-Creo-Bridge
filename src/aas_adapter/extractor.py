@@ -114,14 +114,13 @@ def _extract_file_versions(
         file_collection: model.SubmodelElementCollection,
 ) -> list[FileMetadata]:
     """
-    Extract a ``FileVersion`` entry from a ``File`` collection.
+    Extract all ``FileVersion`` entries from a ``File`` collection.
 
     Notes / current behavior:
-    - If multiple ``FileVersion`` items exist, the function currently returns the
-      *last* parsed one (this mirrors the current implementation and can be
-      extended later to return a list).
-    - ``DigitalFile`` is optional; if absent, ``filepath`` and ``file_content_type``
-      are returned as empty strings.
+    - If multiple ``FileVersion`` items exist, the function returns one
+      :class:`FileMetadata` entry for each readable version.
+    - ``DigitalFile`` is optional; if it is missing or unreadable for a given
+      version, that version is skipped and no metadata entry is created for it.
     - ``ExternalFile`` is detected and logged, but not supported yet.
 
     Expected structure (idShorts) inside the collection is typically::
@@ -131,8 +130,9 @@ def _extract_file_versions(
 
     :param file_collection: The collection of submodel elements to extract from.
     :type file_collection: model.SubmodelElementCollection
-    :return: Parsed metadata for a file version, or ``None`` if not present/unreadable.
-    :rtype: FileMetadata | None
+    :return: A list of parsed metadata objects for all readable file versions. If
+        no usable versions are present or readable, an empty list is returned.
+    :rtype: list[FileMetadata]
     """
     metadata: list[FileMetadata] = []
 
@@ -265,6 +265,12 @@ def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
                 content_type = doc_version.get_referable("DigitalFile").content_type
                 doc_name = doc_version.get_referable("DocumentName").value.get("en")
                 file_format = mcad_doc_name_to_cadenas_format(doc_name)
+                if file_format is None:
+                    _logger.warning(
+                        "Could not determine CAD file format from MCAD document name %r; skipping document",
+                        doc_name,
+                    )
+                    continue
 
                 file_data = FileData()
                 file_data.add_metadata(FileMetadata(

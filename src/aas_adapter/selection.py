@@ -1,7 +1,6 @@
 import logging
 import warnings
 from typing import Literal
-from warnings import deprecated
 
 from .models import ConsumingApplication, FileData, FileFormat, Version
 
@@ -43,10 +42,12 @@ def _matching_consuming_apps(m_consuming_apps, app_required,
             ):
                 match compatibility:
                     case "forward":
-                        if Version(c_app.application_version) >= Version(r_app.application_version):
+                        # Forward compatibility: older model/app versions are allowed for a newer requirement.
+                        if Version(c_app.application_version) <= Version(r_app.application_version):
                             return True
                     case "backward":
-                        if Version(c_app.application_version) <= Version(r_app.application_version):
+                        # Backward compatibility: newer model/app versions are allowed for an older requirement.
+                        if Version(c_app.application_version) >= Version(r_app.application_version):
                             return True
                     case "none":
                         if Version(c_app.application_version) == Version(r_app.application_version):
@@ -66,8 +67,12 @@ def filter_model_by_app(
 ) -> list[FileData]:
     """
     Filter models based on required applications. Use keep_app_not_defined to retain models that dont specify any
-    consuming application. compatibility can either be "forward", "backward", "none" or "full". Where backward mean an older
-    file can be opened in a newer program.
+    consuming application. compatibility can either be "forward", "backward", "none" or "full":
+
+      * "backward": an older file can be opened in a newer program
+      * "forward": a newer file can be opened in an older program
+      * "none": only exactly matching versions are accepted
+      * "full": any version is accepted
 
     :param models: The list of models to filter.
     :type models: list[FileData]
@@ -90,12 +95,18 @@ def filter_model_by_app(
     return file_data
 
 
-@deprecated(
-    "Use filter_model_by_app instead", )
 def find_model_for_app(
         models: list[FileData], app_required: list[ConsumingApplication]
 ) -> list[list[FileData]] | None:
     """
+    .. deprecated:: Use :func:`filter_model_by_app` instead.
+    """
+    warnings.warn(
+        "find_model_for_app is deprecated; use filter_model_by_app instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     Filter list of models for required apps. Models that don't have a required
     application specified are skipped.
 
@@ -162,7 +173,15 @@ def _model_sort_by_app(x: FileData, apps: list[ConsumingApplication]) -> tuple[i
     except ValueError:
         app_priority = -len(app_names) - 1
 
-    version_tuple = Version(current_app.application_qualifier).to_tuple()
+    # Prefer application_version if available; fall back to application_qualifier.
+    version_source = getattr(current_app, "application_version", current_app.application_qualifier)
+    try:
+        version_tuple = Version(version_source).to_tuple()
+    except (ValueError, TypeError):
+        # If the version string cannot be parsed (e.g., "Creo", "MCAD"), fall back
+        # to the lowest possible version so that sorting still works.
+        version_tuple = ("", 0, 0, 0)
+
     return app_priority, version_tuple
 
 

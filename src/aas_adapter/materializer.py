@@ -3,9 +3,12 @@ import re
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
+import logging
 
 from aas_adapter.importer import AASXImportResult
 from aas_adapter.models import FileFormat, FileData
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -17,10 +20,13 @@ class PreparedModelFile:
 def materialize_model_file(aas_reg_entry: AASXImportResult, model: FileData,
                            out_dir: Path) -> PreparedModelFile | None:
     for meta in model.metadata:
-        print(f"{meta.filepath}\n"
-              f"content type: {meta.file_content_type}\n"
-              f"version: {meta.file_version}\n"
-              f"file format: {meta.file_format}")
+        logger.info(
+            "%s\ncontent type: %s\nversion: %s\nfile format: %s",
+            meta.filepath,
+            meta.file_content_type,
+            meta.file_version,
+            meta.file_format,
+        )
 
         target_file: Path | None = None
 
@@ -50,11 +56,11 @@ def materialize_model_file(aas_reg_entry: AASXImportResult, model: FileData,
                         target_file = out_dir / target_name
                         with zf.open(info, "r") as src, target_file.open("wb") as dst:
                             dst.write(src.read())
-                        print(f"  Found and saved file from zip: {target_file.resolve()}")
+                        logger.info("  Found and saved file from zip: %s", target_file.resolve())
                     else:
                         continue
             if not found_any:
-                print("  Zip processed in-memory, but no .stp/.step files were found inside.")
+                logger.info("  Zip processed in-memory, but no .stp/.step files were found inside.")
 
         elif (meta.file_content_type == "application/step" or
               meta.file_content_type == "application/octet-stream" or
@@ -62,7 +68,7 @@ def materialize_model_file(aas_reg_entry: AASXImportResult, model: FileData,
             target_file = out_dir / Path(meta.filepath).name
             with target_file.open("wb") as out:
                 aas_reg_entry.file_store.write_file(meta.filepath, out)
-            print(f"  Extracted to: {target_file.resolve()}")
+            logger.info("  Extracted to: %s", target_file.resolve())
 
         if target_file is not None:
             return PreparedModelFile(target_file, meta.file_format)

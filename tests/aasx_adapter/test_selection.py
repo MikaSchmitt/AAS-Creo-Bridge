@@ -94,5 +94,5 @@ def test_filter_model_by_app_raises_for_invalid_compatibility_mode():
         filter_model_by_app(
             [model],
             [required_app],
-            compatibility="full",
+            compatibility="invalid",
         )

@@ -11,6 +11,7 @@ import os
 import tempfile
 import time
 import urllib.request
+import urllib.error
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from pathlib import Path
@@ -122,22 +123,53 @@ URL_CADENAS_FORMAT_LIST = 'https://cadenas-admin.partcommunity.com/PARTcommunity
 def get_cadenas_list():
     """
     Fetches the Cadenas format list XML from the online source if the cache is expired or missing.
-    Returns the root element of the XML tree.
+    Returns the root element of the XML tree, or ``None`` if neither a valid
+    online response nor a readable cached file is available.
     """
     os.makedirs(CACHE_DIR, exist_ok=True)
+
+    def _load_cached_root():
+        """Try to load and parse the cached XML file, returning its root or None on failure."""
+        if not os.path.exists(CACHE_FILE):
+            return None
+        try:
+            tree = ET.parse(CACHE_FILE)
+            return tree.getroot()
+        except (ET.ParseError, OSError) as exc:
+            _logger.warning("Failed to parse cached Cadenas format list '%s': %s", CACHE_FILE, exc)
+            return None
+
+    # Use cache if it exists and is still within TTL
     if os.path.exists(CACHE_FILE) and time.time() - os.path.getmtime(CACHE_FILE) < TTL:
-        tree = ET.parse(CACHE_FILE)
-        return tree.getroot()
-    else:
-        with (urllib.request.urlopen(URL_CADENAS_FORMAT_LIST) as response):
-            response_text = response.read().decode('utf-8')
-        with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+        cached_root = _load_cached_root()
+        if cached_root is not None:
+            return cached_root
+        # If cache is invalid, fall through to try network fetch
+
+    try:
+        with urllib.request.urlopen(URL_CADENAS_FORMAT_LIST, timeout=10) as response:
+            response_text = response.read().decode("utf-8")
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
             f.write(response_text)
         return ET.fromstring(response_text)
+    except (urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ET.ParseError) as exc:
+        _logger.warning(
+            "Failed to fetch or parse online Cadenas format list from '%s': %s",
+            URL_CADENAS_FORMAT_LIST,
+            exc,
+        )
+        # Fall back to any cached data (even if stale)
+        cached_root = _load_cached_root()
+        if cached_root is not None:
+            return cached_root
+        # As a last resort, return None so callers can handle missing data
+        return None
 
 
 def mcad_doc_name_to_cadenas_format(doc_name: str) -> FileFormat | None:
     cadenas_list = get_cadenas_list()
+    if cadenas_list is None:
+        return None
 
     search_query = doc_name.lower().strip()
 

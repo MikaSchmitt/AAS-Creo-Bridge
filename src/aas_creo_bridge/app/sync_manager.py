@@ -58,6 +58,10 @@ class SynchronizationManager:
 
     def sync_aas_to_creo(self, aas_shell_id: str) -> None:
         aasx = get_aasx_registry().get(aas_shell_id)
+        if aasx is None:
+            _logger.error("No AASX registry entry found for AAS shell %s", aas_shell_id)
+            return None
+
         models = get_models_from_aas(aasx, aas_shell_id)
         best = select_best_model(models, self._application, self._file_format)
 
@@ -70,15 +74,7 @@ class SynchronizationManager:
             _logger.warning("Model materialization returned no result for AAS shell %s", aas_shell_id)
             return None
 
-        print(prepared.extracted_path)
-        return None
-
-        # TODO: set creo version based on settings / config
-
-        # TODO: select best fitting model Version -> Application -> file format
-
-        # TODO: handle zip files
-        # import_model_into_creo()
+        _logger.info("Prepared model extracted to %s", prepared.extracted_path)
 
 
 # Backwards-compatible name expected by app.context.init_sync_manager()
