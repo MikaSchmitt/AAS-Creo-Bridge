@@ -27,11 +27,12 @@ entry points (stable convenience surface), e.g.::
 
 Data structures
 ---------------
-See :mod:`~aas_adapter.types` for:
-- :class:`~aas_adapter.types.ConsumingApplication`
-- :class:`~aas_adapter.types.FileFormat`
-- :class:`~aas_adapter.types.FileMetadata`
-- :class:`~aas_adapter.types.FileData`
+See :mod:`~aas_adapter.models` for:
+- :class:`~aas_adapter.models.ConsumingApplication`
+- :class:`~aas_adapter.models.FileFormat`
+- :class:`~aas_adapter.models.FileMetadata`
+- :class:`~aas_adapter.models.FileData`
+- :class:`~aas_adapter.models.Version`
 """
 
 from aas_adapter.extractor import get_models_from_aas
