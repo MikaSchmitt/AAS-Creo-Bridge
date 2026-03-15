@@ -3,19 +3,19 @@ import logging
 
 import creopyson
 
-from .types import parameter, part_parameters
+from .types import parameter, CreoEntity
 from .bom_component_export import get_assembly_data
 
 _logger = logging.getLogger(__name__)
 
 def update_parameters_from_list(
     client: creopyson.Client,
-    parts_with_parameters: list[part_parameters],
+    parts_with_parameters: list[CreoEntity],
     model_name: str | None = None,
 ) -> None:
     """
     Reads the assembly structure from Creo and updates parameters based on a list
-    of part_parameters entries.
+    of CreoEntity entries.
     """
 
     if not parts_with_parameters:

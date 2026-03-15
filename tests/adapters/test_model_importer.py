@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from aas_creo_bridge.adapters.creo.model_importer import import_model_into_creo
+from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
 
 
 def test_import_model_into_creo_raises_for_missing_path(tmp_path: Path) -> None:

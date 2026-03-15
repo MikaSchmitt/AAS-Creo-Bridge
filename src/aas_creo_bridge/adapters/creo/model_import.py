@@ -5,7 +5,12 @@ import creopyson
 
 _logger = logging.getLogger(__name__)
 
-def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
+def import_model_into_creo(
+    client: creopyson.Client,
+    path: Path,
+    *,
+    use_workdir: bool = False,
+) -> None:
     """
     Automatically detects the format from file extensions and
     safely opens or imports the model into Creo.
@@ -13,13 +18,14 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
     if not path.exists():
         raise FileNotFoundError(f"Path does not exist: {path}")
 
-    try:
-        # Set working directory
-        client.creo_cd(str(path.parent))
-        _logger.info("Working directory changed to: %s", str(path.parent))
-    except Exception as e:
-        _logger.error("Error setting working directory: %r", e, exc_info=True)
-        raise RuntimeError(f"Failed to set working directory: {path.parent}") from e
+    if use_workdir:
+        try:
+            # Set working directory
+            client.creo_cd(str(path.parent))
+            _logger.info("Working directory changed to: %s", str(path.parent))
+        except Exception as e:
+            _logger.error("Error setting working directory: %r", e, exc_info=True)
+            raise RuntimeError(f"Failed to set working directory: {path.parent}") from e
 
     # Extract all extensions (lowercase, without dots)
     extensions = [s.lower().strip('.') for s in path.suffixes]
@@ -27,7 +33,10 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
     try:
         # --- 1. Native Creo Formats ---
         if "asm" in extensions or "prt" in extensions:
-            client.file_open(path.name, display=True)
+            if use_workdir:
+                client.file_open(path.name, display=True)
+            else:
+                client.file_open(path.name, dirname=str(path.parent), display=True)
             _logger.info("Successfully opened native file: %s", path.name)
             return
 
@@ -49,9 +58,14 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
         imported_model_name = client.interface_import_file(
             filename=path.name,
             file_type=file_type,
-            new_name = path.name[: -len(''.join(path.suffixes))]
+            dirname=None if use_workdir else str(path.parent),
+            new_name=path.name[: -len(''.join(path.suffixes))]
         )  # Use filename without extensions as model name
-        client.file_open(imported_model_name, display=True)
+        client.file_open(
+            imported_model_name,
+            dirname=None if use_workdir else str(path.parent),
+            display=True,
+        )
         _logger.info("Successfully imported and opened %s model: %s", file_type, imported_model_name)
 
 
