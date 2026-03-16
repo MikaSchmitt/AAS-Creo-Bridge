@@ -9,12 +9,13 @@ import creopyson
 
 _logger = logging.getLogger(__name__)
 
+
 def _get_component_data(
-    client: creopyson.Client,
-    file_name: str,
-    *,
-    include_parameters: bool,
-    include_file_info: bool,
+        client: creopyson.Client,
+        file_name: str,
+        *,
+        include_parameters: bool,
+        include_file_info: bool,
 ) -> dict[str, Any]:
     """Return optional metadata for one component based on active flags."""
     data: dict[str, Any] = {}
@@ -43,18 +44,18 @@ def _walk_bom_tree(node: Any, visit_fn) -> None:
 
 
 def get_assembly_data(
-    client: creopyson.Client,
-    file_: str | None = None,
-    *,
-    paths: bool = True,
-    skeletons: bool = False,
-    top_level: bool = False,
-    get_transforms: bool = False,
-    exclude_inactive: bool = False,
-    get_simpreps: bool = False,
-    include_parameters: bool = False,
-    include_file_info: bool = False,
-    include_enriched_tree: bool = False,
+        client: creopyson.Client,
+        file_: str | None = None,
+        *,
+        paths: bool = True,
+        skeletons: bool = False,
+        top_level: bool = False,
+        get_transforms: bool = False,
+        exclude_inactive: bool = False,
+        get_simpreps: bool = False,
+        include_parameters: bool = False,
+        include_file_info: bool = False,
+        include_enriched_tree: bool = False,
 ) -> dict[str, Any]:
     """
     Main function: fetch assembly tree and return only the requested data.
@@ -99,15 +100,15 @@ def get_assembly_data(
 
 
 def get_bom_with_metadata(
-    client: creopyson.Client,
-    file_: str | None = None,
-    *,
-    paths: bool = True,
-    skeletons: bool = False,
-    top_level: bool = False,
-    get_transforms: bool = False,
-    exclude_inactive: bool = False,
-    get_simpreps: bool = False,
+        client: creopyson.Client,
+        file_: str | None = None,
+        *,
+        paths: bool = True,
+        skeletons: bool = False,
+        top_level: bool = False,
+        get_transforms: bool = False,
+        exclude_inactive: bool = False,
+        get_simpreps: bool = False,
 ) -> dict[str, Any]:
     """Compatibility wrapper: return tree with parameters and file info."""
     result = get_assembly_data(
@@ -127,16 +128,16 @@ def get_bom_with_metadata(
 
 
 def export_bom_with_metadata(
-    client: creopyson.Client,
-    output_file: Path,
-    file_: str | None = None,
-    *,
-    paths: bool = True,
-    skeletons: bool = False,
-    top_level: bool = False,
-    get_transforms: bool = False,
-    exclude_inactive: bool = False,
-    get_simpreps: bool = False,
+        client: creopyson.Client,
+        output_file: Path,
+        file_: str | None = None,
+        *,
+        paths: bool = True,
+        skeletons: bool = False,
+        top_level: bool = False,
+        get_transforms: bool = False,
+        exclude_inactive: bool = False,
+        get_simpreps: bool = False,
 ) -> Path:
     """Compatibility wrapper: export tree with full metadata."""
     bom_data = get_assembly_data(

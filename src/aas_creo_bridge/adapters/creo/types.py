@@ -3,13 +3,13 @@ from typing import Any
 
 
 @dataclass
-class parameter:
+class Parameter:
     parameter_name: str
     type: str
     value: Any
 
 
 @dataclass
-class part_parameters:
+class PartParameters:
     file_name: str
-    parameters: list[parameter]
+    parameters: list[Parameter]
