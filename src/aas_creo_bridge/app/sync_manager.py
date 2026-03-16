@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from aas_adapter import ConsumingApplication, get_models_from_aas, select_best_model, materialize_model_file
-from aas_creo_bridge.app.context import get_aasx_registry
+from aas_creo_bridge.adapters.creo import import_model_into_creo
+from aas_creo_bridge.app.context import get_aasx_registry, get_creoson_client
 
 if TYPE_CHECKING:
     from typing import List
@@ -84,6 +85,6 @@ class SynchronizationManager:
             _logger.debug("Exception while syncing AAS shell %s", aas_shell_id, exc_info=True)
             return None
 
-
-# Backwards-compatible name expected by app.context.init_sync_manager()
-SyncManager = SynchronizationManager
+        client = get_creoson_client()
+        import_model_into_creo(client, prepared.extracted_path)
+        return None

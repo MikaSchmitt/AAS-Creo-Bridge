@@ -46,8 +46,12 @@ class TestSynchronizationManager(unittest.TestCase):
     @patch("aas_creo_bridge.app.sync_manager.select_best_model")
     @patch("aas_creo_bridge.app.sync_manager.get_models_from_aas")
     @patch("aas_creo_bridge.app.sync_manager.get_aasx_registry")
+    @patch("aas_creo_bridge.app.sync_manager.get_creoson_client")
+    @patch("aas_creo_bridge.app.sync_manager.import_model_into_creo")
     def test_sync_aas_to_creo_uses_registry_selection_and_materializer(
             self,
+            import_model_into_creo_mock: MagicMock,
+            get_creoson_client_mock: MagicMock,
             registry_factory: MagicMock,
             get_models_from_aas_mock: MagicMock,
             select_best_model_mock: MagicMock,
@@ -63,12 +67,14 @@ class TestSynchronizationManager(unittest.TestCase):
         best_model = MagicMock()
         prepared = MagicMock()
         prepared.extracted_path = "C:/temp/model.step"
+        creoson_client = MagicMock()
 
         registry.get.return_value = aasx_obj
         registry_factory.return_value = registry
         get_models_from_aas_mock.return_value = models
         select_best_model_mock.return_value = best_model
         materialize_model_file_mock.return_value = prepared
+        get_creoson_client_mock.return_value = creoson_client
 
         manager.sync_aas_to_creo("aas_456")
 
@@ -83,6 +89,11 @@ class TestSynchronizationManager(unittest.TestCase):
             aasx_obj,
             best_model,
             manager.out_dir,
+        )
+        get_creoson_client_mock.assert_called_once_with()
+        import_model_into_creo_mock.assert_called_once_with(
+            creoson_client,
+            prepared.extracted_path,
         )
 
     @patch("aas_creo_bridge.app.sync_manager.materialize_model_file")
