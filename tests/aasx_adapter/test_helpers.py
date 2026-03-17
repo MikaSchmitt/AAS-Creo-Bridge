@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from aas_creo_bridge.adapters.aasx.helpers import Version
+from aas_adapter import Version
+
 
 def test_version_class_constructors():
     ver = Version("1.2.3")
@@ -19,6 +20,15 @@ def test_version_class_constructors():
     assert ver.major == 5
     assert ver.minor == 2
     assert ver.patch == 7
+
+    ver = Version("10")
+    assert ver.major == 10
+    assert ver.minor == 0
+    assert ver.patch == 0
+
+    ver = Version("Creo Parametric 10")
+    assert ver.name == "Creo Parametric"
+    assert ver.major == 10
 
     try:
         ver = Version("15alpha2")
