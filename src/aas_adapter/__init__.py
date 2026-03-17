@@ -35,7 +35,7 @@ See :mod:`~aas_adapter.models` for:
 - :class:`~aas_adapter.models.Version`
 """
 
-from aas_adapter.extractor import get_models_from_aas
+from aas_adapter.extractor import get_global_asset_id, get_models_from_aas
 from aas_adapter.helpers import get_value
 from aas_adapter.importer import AASXImportResult, import_aasx
 from aas_adapter.materializer import materialize_model_file
@@ -46,7 +46,7 @@ from aas_adapter.models import (
     FileMetadata,
     Version,
 )
-from aas_adapter.registry import AASXRegistry
+from aas_adapter.registry import AASXRegistry, RegistryAction
 from aas_adapter.selection import (
     find_model_for_app,
     group_models_by_version,
@@ -59,11 +59,13 @@ __version__ = "0.1.1"
 __all__ = [
     "AASXImportResult",
     "AASXRegistry",
+    "RegistryAction",
     "ConsumingApplication",
     "FileData",
     "FileFormat",
     "FileMetadata",
     "Version",
+    "get_global_asset_id",
     "get_models_from_aas",
     "find_model_for_app",
     "group_models_by_version",

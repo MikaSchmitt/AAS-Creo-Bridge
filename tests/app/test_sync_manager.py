@@ -42,6 +42,40 @@ class TestSynchronizationManager(unittest.TestCase):
         self.assertEqual(links[0].aas_shell_id, "aas_1")
         self.assertEqual(links[0].creo_model_name, "new_model")
 
+    def test_link_supports_lookup_in_both_directions(self) -> None:
+        from aas_creo_bridge.app.context import get_sync_manager
+
+        manager = get_sync_manager()
+        manager.unlink_all()
+        manager.link("aas_1", "model_1")
+
+        self.assertEqual(manager.get_creo_model_name_by_aas_id("aas_1"), "model_1")
+        self.assertEqual(manager.get_aas_id_by_creo_model_name("model_1"), "aas_1")
+
+    def test_link_moves_model_when_reassigned_to_other_aas(self) -> None:
+        from aas_creo_bridge.app.context import get_sync_manager
+
+        manager = get_sync_manager()
+        manager.unlink_all()
+        manager.link("aas_1", "shared_model")
+        manager.link("aas_2", "shared_model")
+
+        self.assertIsNone(manager.get_creo_model_name_by_aas_id("aas_1"))
+        self.assertEqual(manager.get_creo_model_name_by_aas_id("aas_2"), "shared_model")
+        self.assertEqual(manager.get_aas_id_by_creo_model_name("shared_model"), "aas_2")
+
+    def test_unlink_clears_forward_and_reverse_lookup(self) -> None:
+        from aas_creo_bridge.app.context import get_sync_manager
+
+        manager = get_sync_manager()
+        manager.unlink_all()
+        manager.link("aas_1", "model_1")
+
+        manager.unlink("aas_1")
+
+        self.assertIsNone(manager.get_creo_model_name_by_aas_id("aas_1"))
+        self.assertIsNone(manager.get_aas_id_by_creo_model_name("model_1"))
+
     @patch("aas_creo_bridge.app.sync_manager.materialize_model_file")
     @patch("aas_creo_bridge.app.sync_manager.select_best_model")
     @patch("aas_creo_bridge.app.sync_manager.get_models_from_aas")

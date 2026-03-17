@@ -9,6 +9,52 @@ from .types import Parameter, PartParameters
 _logger = logging.getLogger(__name__)
 
 
+def update_parameter(
+        client: creopyson.Client,
+        part_parameters: PartParameters,
+) -> None:
+    part_name: str = part_parameters.file_name
+
+    if not client.is_creo_running():
+        raise RuntimeError("Creo is not running.")
+
+    if not client.file_exists(part_name):
+        raise FileNotFoundError(f"Part file not found in Creo: {part_name}")
+
+    for param in part_parameters.parameters:
+        try:
+            client.parameter_set(
+                file_=part_name,
+                name=param.parameter_name,
+                value=param.value,
+                type_=param.type,
+                designate=True,  # Designate the parameter so it can be used in PDM and BOM
+            )
+            _logger.info("Updated %s -> %s: %s", part_name, param.parameter_name, param.value)
+        except Exception as e:
+            _logger.error(
+                "Could not set parameter %s for %s: %r",
+                param.parameter_name,
+                part_name,
+                e,
+                exc_info=True,
+            )
+
+
+def bulk_update_parameters(
+        client: creopyson.Client,
+        parts_with_parameters: list[PartParameters],
+) -> None:
+    errors: str = ""
+    for part_parameters in parts_with_parameters:
+        try:
+            update_parameter(client, part_parameters)
+        except Exception as e:
+            errors += f"    {str(e)} \n"
+    if errors:
+        raise RuntimeError(f"Failed to set {len(errors)} parameter(s):\n{errors}")
+
+
 def update_parameters_from_list(
         client: creopyson.Client,
         parts_with_parameters: list[PartParameters],
