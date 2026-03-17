@@ -1,28 +1,29 @@
-import re
 import logging
+import re
 
 import creopyson
 
-from .types import parameter, CreoEntity
 from .bom_component_export import get_assembly_data
+from .types import Parameter, PartParameters
 
 _logger = logging.getLogger(__name__)
 
+
 def update_parameters_from_list(
-    client: creopyson.Client,
-    parts_with_parameters: list[CreoEntity],
-    model_name: str | None = None,
+        client: creopyson.Client,
+        parts_with_parameters: list[PartParameters],
+        model_name: str | None = None,
 ) -> None:
     """
     Reads the assembly structure from Creo and updates parameters based on a list
-    of CreoEntity entries.
+    of part_parameters entries.
     """
 
     if not parts_with_parameters:
         raise ValueError("No part parameter data provided.")
 
     # Map normalized file name -> list of parameters to write.
-    parameter_map: dict[str, list[parameter]] = {}
+    parameter_map: dict[str, list[Parameter]] = {}
     for part in parts_with_parameters:
         normalized_name = re.sub(r"\.\d+$", "", part.file_name).strip().lower()
         parameter_map[normalized_name] = part.parameters

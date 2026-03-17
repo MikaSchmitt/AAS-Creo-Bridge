@@ -12,6 +12,12 @@ class Parameter:
 
 
 @dataclass
+class PartParameters:
+    file_name: str
+    parameters: list[Parameter]
+
+
+@dataclass
 class CreoEntity:
     # Identification and origin
     file_name: str
