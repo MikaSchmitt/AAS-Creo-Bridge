@@ -1,4 +1,4 @@
-aas\_creo\_bridge.adapters
+﻿aas\_creo\_bridge.adapters
 ==========================
 
 .. automodule:: aas_creo_bridge.adapters
@@ -10,5 +10,4 @@ aas\_creo\_bridge.adapters
    :toctree:
    :recursive:
 
-   aasx
    creo

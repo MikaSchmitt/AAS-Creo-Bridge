@@ -9,3 +9,4 @@ API Reference
    :recursive:
 
    aas_creo_bridge
+   aas_adapter
