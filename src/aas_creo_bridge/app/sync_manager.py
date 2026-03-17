@@ -1,14 +1,20 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
 
-from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-from aas_creo_bridge.adapters.aasx.get_models import get_models_from_aas, ConsumingApplication, find_model_for_app
-from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
+import logging
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from aas_adapter import ConsumingApplication, get_models_from_aas, select_best_model, materialize_model_file
+
 from aas_creo_bridge.app.context import get_aasx_registry
 
 if TYPE_CHECKING:
     from typing import List
+
+_logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ConnectionLink:
@@ -30,50 +36,54 @@ class CreoModelDefinition:
         return self._model_name
 
 
-class ModelExtractor(Protocol):
-    def extract_model(self, aas_shell_id: str) -> CreoModelDefinition: ...
-
-
-class CreoAdapter(Protocol):
-    def create_model(self, definition: CreoModelDefinition) -> None: ...
-
-
 class SynchronizationManager:
     def __init__(self) -> None:
+        self._file_format = None
+        self._application = [ConsumingApplication("Creo Parametric", "12", "CREO12"),
+                             ConsumingApplication("STEP", "AP242", "STEP-242")]
         self._links: dict[str, ConnectionLink] = {}
-        self._extractor: ModelExtractor | None = None
-        self._creo_adapter: CreoAdapter | None = None
-
-    def set_extractor(self, extractor: ModelExtractor) -> None:
-        self._extractor = extractor
-
-    def set_creo_adapter(self, creo_adapter: CreoAdapter) -> None:
-        self._creo_adapter = creo_adapter
+        self.out_dir = Path(tempfile.mkdtemp(prefix="aas_creo_bridge_"))
 
     def link(self, aas_shell_id: str, creo_model_name: str | None) -> None:
         self._links[aas_shell_id] = ConnectionLink(aas_shell_id, creo_model_name)
+
+    def unlink(self, aas_shell_id: str) -> None:
+        del self._links[aas_shell_id]
+
+    def unlink_all(self) -> None:
+        self._links.clear()
 
     def list_links(self) -> List[ConnectionLink]:
         return list(self._links.values())
 
     def sync_aas_to_creo(self, aas_shell_id: str) -> None:
-        # Preferred/testable path (used by your unit tests)
-        if self._extractor is not None and self._creo_adapter is not None:
-            extracted = self._extractor.extract_model(aas_shell_id)
-            self._creo_adapter.create_model(extracted)
-            self.link(aas_shell_id, extracted.model_name)
-            return
+        aasx = get_aasx_registry().get(aas_shell_id)
+        if aasx is None:
+            _logger.error("No AASX registry entry found for AAS shell %s", aas_shell_id)
+            return None
 
-        # Fallback path (current implementation hooks)
-        aasx_registry = get_aasx_registry()
-        aasx: AASXImportResult = aasx_registry.get(aas_shell_id)
-        models = get_models_from_aas(aasx, aas_shell_id)
+        try:
+            models = get_models_from_aas(aasx, aas_shell_id)
+            best = select_best_model(models, self._application, self._file_format)
 
-        modles_for_app = find_model_for_app(models, [ConsumingApplication("Creo", "12", "Creo 12"), ConsumingApplication("STEP", "AP312", "Step-2.14")])
+            if best is None:
+                _logger.warning("No suitable model found for AAS shell %s", aas_shell_id)
+                return None
 
-        # TODO: select best fitting model
-        # TODO: handle zip files
-        #import_model_into_creo()
+            prepared = materialize_model_file(aasx, best, self.out_dir)
+            if prepared is None:
+                _logger.warning("Model materialization returned no result for AAS shell %s", aas_shell_id)
+                return None
+
+            _logger.info("Prepared model extracted to %s", prepared.extracted_path)
+        except ValueError as exc:
+            _logger.error(
+                "Failed to synchronize AAS shell %s to Creo due to invalid AAS data: %s",
+                aas_shell_id,
+                exc,
+            )
+            _logger.debug("Exception while syncing AAS shell %s", aas_shell_id, exc_info=True)
+            return None
 
 
 # Backwards-compatible name expected by app.context.init_sync_manager()
