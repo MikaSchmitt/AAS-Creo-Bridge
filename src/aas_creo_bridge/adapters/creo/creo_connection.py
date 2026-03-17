@@ -1,16 +1,17 @@
-from pathlib import Path
 import subprocess
 import time
+from pathlib import Path
 from typing import Union
 
 import creopyson
+from creopyson.exceptions import MissingKey
 
 
 def connect_to_creoson(
-    server_folder: Union[str, Path],
-    max_retries: int = 5,
-    delay: int = 2,
-) -> creopyson.Client:
+        server_folder: Union[str, Path],
+        max_retries: int = 5,
+        delay: int = 2,
+) -> creopyson.Client | None:
     """
     Starts the Creoson server from the provided folder and connects with retry logic.
 
@@ -45,8 +46,11 @@ def connect_to_creoson(
             client.connect()
             print("Successfully connected to Creoson.")
             return client
-        except Exception:
+        except ConnectionError:
             if attempt < max_retries:
                 time.sleep(delay)
             else:
                 raise RuntimeError("Connection to Creoson failed after several attempts.")
+        except RuntimeError | MissingKey as e:
+            raise RuntimeError(f"Failed to connect to Creoson: {e}") from e
+    return None

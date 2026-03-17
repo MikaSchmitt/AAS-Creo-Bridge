@@ -17,8 +17,8 @@ import logging
 import os
 import tempfile
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from pathlib import Path
