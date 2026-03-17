@@ -5,11 +5,7 @@ import traceback
 from pathlib import Path
 from tkinter import simpledialog, ttk, filedialog, messagebox
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from aas_creo_bridge.adapters.aasx.aasx_importer import AASXImportResult
-
-from aas_creo_bridge.adapters.aasx.aasx_importer import import_aasx
+from aas_adapter.importer import import_aasx
 from aas_creo_bridge.app.context import get_aasx_registry, get_logger
 
 

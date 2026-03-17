@@ -5,16 +5,35 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from basyx.aas import model
-from basyx.aas.adapter import DictObjectStore, DictSupplementaryFileContainer, AASXReader
+from basyx.aas.adapter import (
+    AASXReader,
+    DictObjectStore,
+    DictSupplementaryFileContainer,
+)
 from pyecma376_2 import OPCCoreProperties
-
-
 
 _logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class AASXImportResult:
+    """
+    Result of an AASX file import operation.
+
+    :ivar path: Path of the imported AASX file.
+    :type path: Path
+    :ivar object_store: Container for all Identifiable objects from the AASX.
+    :type object_store: DictObjectStore
+    :ivar file_store: Container for supplementary files from the AASX.
+    :type file_store: DictSupplementaryFileContainer
+    :ivar metadata: Core properties/metadata of the AASX package.
+    :type metadata: OPCCoreProperties | None
+    :ivar thumbnail: Raw bytes of the package thumbnail, if any.
+    :type thumbnail: bytes | None
+    :ivar shells: List of identifiers for Asset Administration Shells found in the package.
+    :type shells: list[str]
+    """
+
     path: Path
     object_store: DictObjectStore
     file_store: DictSupplementaryFileContainer
@@ -51,7 +70,9 @@ def import_aasx(path: Path) -> AASXImportResult:
         thumbnail = None
 
         with AASXReader(path) as reader:
-            identifiers = reader.read_into(object_store=object_store, file_store=file_store)
+            identifiers = reader.read_into(
+                object_store=object_store, file_store=file_store
+            )
             metadata = reader.get_core_properties()
             thumbnail = reader.get_thumbnail()
 
@@ -68,7 +89,19 @@ def import_aasx(path: Path) -> AASXImportResult:
         raise ValueError(f"Not a valid AASX/zip file: {path}") from e
 
 
-def _discover_shells(identifiers: set[str], objects: model.AbstractObjectStore) -> list[str]:
+def _discover_shells(
+        identifiers: set[str], objects: model.AbstractObjectStore
+) -> list[str]:
+    """
+    Identify and extract Asset Administration Shell identifiers from a set of object identifiers.
+
+    :param identifiers: Set of identifiers discovered in the AASX.
+    :type identifiers: set[str]
+    :param objects: The object store containing the actual objects.
+    :type objects: model.AbstractObjectStore
+    :return: A list of identifiers that correspond to Asset Administration Shells.
+    :rtype: list[str]
+    """
     aas_shells = []
 
     if not identifiers or not objects:
@@ -76,6 +109,8 @@ def _discover_shells(identifiers: set[str], objects: model.AbstractObjectStore) 
     for identifier in identifiers:
         identifiable = objects.get_identifiable(identifier)
         if isinstance(identifiable, model.AssetAdministrationShell):
-            _logger.info(f"AssetAdministrationShell found {identifiable.id_short} {identifiable.id}")
+            _logger.info(
+                f"AssetAdministrationShell found {identifiable.id_short} {identifiable.id}"
+            )
             aas_shells.append(identifier)
     return aas_shells
