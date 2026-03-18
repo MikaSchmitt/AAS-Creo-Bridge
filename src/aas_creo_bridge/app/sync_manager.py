@@ -50,17 +50,19 @@ class SynchronizationManager:
 
     def link(self, aas_shell_id: str | None, creo_model_name: str | None) -> None:
 
-        link = self._links_by_aas_id.get(aas_shell_id, None)
-        if link and link.creo_model_name == creo_model_name:
-            return
-        elif link and link.creo_model_name != creo_model_name:
-            raise RuntimeError(f"AAS shell {aas_shell_id} is already linked")
+        if aas_shell_id:
+            link = self._links_by_aas_id.get(aas_shell_id, None)
+            if link and link.creo_model_name == creo_model_name:
+                return
+            elif link and link.creo_model_name and link.creo_model_name != creo_model_name:
+                raise RuntimeError(f"AAS shell {aas_shell_id} is already linked to a different Creo model")
 
-        link = self._links_by_creo_model.get(creo_model_name)
-        if link and link.aas_shell_id == aas_shell_id:
-            return
-        elif link and link.aas_shell_id != aas_shell_id:
-            raise RuntimeError(f"Creo model {creo_model_name} is already linked")
+        if creo_model_name:
+            link = self._links_by_creo_model.get(creo_model_name)
+            if link and link.aas_shell_id == aas_shell_id:
+                return
+            elif link and link.aas_shell_id and link.aas_shell_id != aas_shell_id:
+                raise RuntimeError(f"Creo model {creo_model_name} is already linked to a different AAS shell")
 
         if aas_shell_id:
             self._links_by_aas_id[aas_shell_id] = ConnectionLink(aas_shell_id, creo_model_name)
@@ -71,11 +73,13 @@ class SynchronizationManager:
     def unlink(self, key: str) -> None:
         if key in self._links_by_aas_id:
             conn = self._links_by_aas_id.pop(key)
-            self._links_by_creo_model.pop(conn.creo_model_name)
+            if conn.creo_model_name:
+                self._links_by_creo_model.pop(conn.creo_model_name)
             return
         if key in self._links_by_creo_model:
             conn = self._links_by_creo_model.pop(key)
-            self._links_by_aas_id.pop(conn.aas_shell_id)
+            if conn.aas_shell_id:
+                self._links_by_aas_id.pop(conn.aas_shell_id)
             return
 
     def unlink_all(self) -> None:
@@ -89,7 +93,7 @@ class SynchronizationManager:
         return self._links_by_aas_id.get(aas_shell_id)
 
     def get_link_by_creo_model(self, creo_model_name: str) -> ConnectionLink | None:
-        return self._links_by_aas_id.get(creo_model_name)
+        return self._links_by_creo_model.get(creo_model_name)
 
     def sync_aas_to_creo(self, aas_id: str) -> None:
         aasx = get_aasx_registry().get(aas_id)

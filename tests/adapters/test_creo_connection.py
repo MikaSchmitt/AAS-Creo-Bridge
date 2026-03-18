@@ -4,7 +4,8 @@ from pathlib import Path
 
 from aas_creo_bridge.adapters.creo.creo_connection import connect_to_creoson
 
-CREOSON_DIR = Path(r"C:\Users\T\Documents\PycharmProjects\AAS-Creo-Bridge\creoson")
+CREOSON_DIR = Path(
+    Path(__file__).parent.parent.parent / "creoson")  # Adjust this path to point to your local creoson setup
 
 
 def _can_run_creoson() -> bool:

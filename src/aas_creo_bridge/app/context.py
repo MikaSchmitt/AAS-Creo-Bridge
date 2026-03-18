@@ -4,11 +4,11 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from creopyson import Client
 from creopyson.exceptions import MissingKey
 
-from aas_creo_bridge.adapters.creo import connect_to_creoson
+from aas_creo_bridge.adapters.creo import connect_to_creoson, CreoSessionTracker
 from aas_creo_bridge.app.logging import LogStore
+from creopyson import Client
 
 if TYPE_CHECKING:
     from aas_adapter import AASXRegistry
@@ -19,6 +19,7 @@ _aasx_registry: AASXRegistry | None = None
 _sync_manager: SynchronizationManager | None = None
 _creoson_client: Client | None = None
 _path_to_creoson: Path | None = None
+_creo_session_tracker: CreoSessionTracker | None = None
 
 
 def init_log_store() -> LogStore:
@@ -84,3 +85,17 @@ def get_creoson_client() -> Client | None:
         _creoson_client = connect_to_creoson(_path_to_creoson)
 
     return _creoson_client
+
+
+def init_creo_session_tracker() -> None:
+    global _creo_session_tracker
+    if _creo_session_tracker is None:
+        _creo_session_tracker = CreoSessionTracker(client=get_creoson_client(), poll_interval_seconds=1)
+        _creo_session_tracker.initialize()
+        _creo_session_tracker.refresh()
+
+
+def get_creo_session_tracker() -> CreoSessionTracker:
+    if not _creo_session_tracker:
+        init_creo_session_tracker()
+    return _creo_session_tracker

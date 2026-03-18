@@ -25,16 +25,16 @@ def update_parameter(
         try:
             client.parameter_set(
                 file_=part_name,
-                name=param.parameter_name,
+                name=param.name,
                 value=param.value,
                 type_=param.type,
                 designate=True,  # Designate the parameter so it can be used in PDM and BOM
             )
-            _logger.info("Updated %s -> %s: %s", part_name, param.parameter_name, param.value)
+            _logger.info("Updated %s -> %s: %s", part_name, param.name, param.value)
         except Exception as e:
             _logger.error(
                 "Could not set parameter %s for %s: %r",
-                param.parameter_name,
+                param.name,
                 part_name,
                 e,
                 exc_info=True,
@@ -86,10 +86,10 @@ def update_parameters_from_list(
         exclude_inactive=False,
         get_simpreps=False,
         include_parameters=True,
-        include_file_info=False,
-        include_enriched_tree=True,
+        include_mass_props=False,
+        include_bounding_box=True,
     )
-    components = set(assembly_data["component_files"])
+    components = set(assembly_data.index)
 
     if not components:
         raise RuntimeError("No components found or error during BOM extraction.")
@@ -136,28 +136,28 @@ def update_parameters_from_list(
         existing_param_names = existing_param_map.get(comp, set())
 
         for param in parameter_map[comp_clean]:
-            if param.parameter_name.upper() in existing_param_names:
-                _logger.info("Skipping %s -> %s (already exists)", comp, param.parameter_name)
+            if param.name.upper() in existing_param_names:
+                _logger.info("Skipping %s -> %s (already exists)", comp, param.name)
                 continue
             try:
                 client.parameter_set(
                     file_=comp,
-                    name=param.parameter_name,
+                    name=param.name,
                     value=param.value,
                     type_=param.type,
                     designate=True,
                 )
-                _logger.info("Updated %s -> %s: %s", comp, param.parameter_name, param.value)
+                _logger.info("Updated %s -> %s: %s", comp, param.name, param.value)
                 updates_done += 1
             except Exception as e:
                 _logger.error(
                     "Could not set parameter %s for %s: %r",
-                    param.parameter_name,
+                    param.name,
                     comp,
                     e,
                     exc_info=True,
                 )
-                errors.append(f"{comp}:{param.parameter_name}")
+                errors.append(f"{comp}:{param.name}")
 
     _logger.info("Process finished. Successfully updated %s parameters.", updates_done)
 
