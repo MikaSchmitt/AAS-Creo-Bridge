@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -8,6 +6,7 @@ import creopyson
 from .types import CreoBom, CreoEntity, Parameter
 
 _logger = logging.getLogger(__name__)
+
 
 def _get_seq_path(node: dict[str, Any]) -> str | None:
     for key in ("seq_path", "path", "seqpath"):
@@ -45,43 +44,81 @@ def _to_parameters(raw_params: list[dict[str, Any]] | None) -> list[Parameter]:
     return params
 
 
-def _build_entity_tree(bom_res: dict[str, Any]) -> CreoBom:
-    root_file = str(bom_res.get("file") or "")
-    root = CreoEntity(file_name=root_file, seq_path="root", level=0)
-    index: dict[str, CreoEntity] = {"root": root}
+def _iter_child_nodes(node: dict[str, Any]) -> list[dict[str, Any]]:
+    children = node.get("children")
+    if isinstance(children, dict):
+        return [children]
+    if isinstance(children, list):
+        return [item for item in children if isinstance(item, dict)]
+    return []
 
-    def _build_from_node(node: dict[str, Any]) -> CreoEntity | None:
-        file_name = _get_file_name(node)
+
+def _resolve_root_node(bom_res: dict[str, Any]) -> dict[str, Any] | None:
+    children = bom_res.get("children")
+    if isinstance(children, dict):
+        return children
+    if any(key in bom_res for key in ("file", "seq_path", "children")):
+        return bom_res
+    return None
+
+
+def _build_entity_tree(bom_res: dict[str, Any], *, get_transforms: bool) -> CreoBom:
+    root_node = _resolve_root_node(bom_res)
+    bom_file = str(bom_res.get("file") or "")
+    root_file = str((root_node or {}).get("file") or bom_file or "")
+    if bom_file and root_file and bom_file != root_file:
+        _logger.warning(
+            "BOM root file mismatch: bom_res.file=%s root_node.file=%s",
+            bom_file,
+            root_file,
+        )
+    root_seq_path = _get_seq_path(root_node or {}) or str(bom_res.get("seq_path") or "root")
+    root = CreoEntity(file_name=root_file, seq_path=root_seq_path, level=0)
+    index: dict[str, CreoEntity] = {root.seq_path: root}
+
+    def _build_from_node(node: dict[str, Any], parent_level: int) -> CreoEntity:
+        file_name = _get_file_name(node) or ""
         seq_path = _get_seq_path(node)
-        if not file_name or not seq_path:
-            _logger.warning("Skipping BOM node with missing file/seq_path: %s", node)
-            return None
+        if not seq_path:
+            seq_path = f"{root.seq_path}.unknown_{len(index)}"
+            _logger.warning("BOM node missing seq_path; generated fallback: %s", seq_path)
 
         level = node.get("level")
         if not isinstance(level, int):
-            level = seq_path.count(".")
+            if "." in seq_path:
+                level = seq_path.count(".")
+            else:
+                level = parent_level + 1
 
+        transform = node.get("transform") if "transform" in node else None
+        if get_transforms and transform is None:
+            _logger.warning("Missing transform data for node %s", seq_path)
         entity = CreoEntity(
             file_name=file_name,
             seq_path=seq_path,
             level=level,
-            transform_matrix=node.get("transform"),
+            transform_matrix=transform if get_transforms else None,
         )
         index[seq_path] = entity
 
-        for child_node in node.get("children") or []:
-            if not isinstance(child_node, dict):
-                continue
-            child_entity = _build_from_node(child_node)
-            if child_entity:
-                entity.add_child(child_entity)
+        for child_node in _iter_child_nodes(node):
+            child_entity = _build_from_node(child_node, entity.level)
+            entity.add_child(child_entity)
         return entity
 
-    for child in bom_res.get("children") or []:
-        if not isinstance(child, dict):
-            continue
-        child_entity = _build_from_node(child)
-        if child_entity:
+    if root_node:
+        children = _iter_child_nodes(root_node)
+        if not children:
+            _logger.warning("Root node has no children: %s", root_seq_path)
+        for child_node in children:
+            child_entity = _build_from_node(child_node, root.level)
+            root.add_child(child_entity)
+    else:
+        children = _iter_child_nodes(bom_res)
+        if not children:
+            _logger.warning("BOM response has no children")
+        for child_node in children:
+            child_entity = _build_from_node(child_node, root.level)
             root.add_child(child_entity)
 
     return CreoBom(root=root, index=index)
@@ -118,7 +155,10 @@ def get_assembly_data(
         _logger.error("Failed to fetch BOM from Creo: %r", exc, exc_info=True)
         raise RuntimeError("Failed to fetch BOM from Creo.") from exc
 
-    bom = _build_entity_tree(bom_res)
+    if not isinstance(bom_res, dict):
+        raise RuntimeError(f"Unexpected BOM response type: {type(bom_res)}")
+
+    bom = _build_entity_tree(bom_res, get_transforms=get_transforms)
 
     _enrich_entities(
         client,
@@ -188,6 +228,22 @@ def get_assembly_component_files(client: creopyson.Client, target_model: str) ->
     """
     Return only unique component file names from an assembly (minimal mode).
     """
+    return get_assembly_component_file_names(
+        client,
+        target_model,
+        include_root=False,
+    )
+
+
+def get_assembly_component_file_names(
+        client: creopyson.Client,
+        target_model: str,
+        *,
+        include_root: bool = False,
+) -> set[str]:
+    """
+    Return unique component file names from an assembly.
+    """
     bom = get_assembly_data(
         client,
         file_=target_model,
@@ -198,4 +254,10 @@ def get_assembly_component_files(client: creopyson.Client, target_model: str) ->
         exclude_inactive=False,
         get_simpreps=False,
     )
-    return {entity.file_name for entity in bom.index.values() if entity.file_name}
+    if include_root:
+        return {entity.file_name for entity in bom.index.values() if entity.file_name}
+    return {
+        entity.file_name
+        for entity in bom.index.values()
+        if entity.file_name and entity is not bom.root
+    }
