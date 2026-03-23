@@ -72,14 +72,14 @@ class ConnectionsView(tk.Frame):
 
         self.creo_list = tk.Listbox(creo_panel, activestyle="dotbox")
         self.creo_list.grid(row=0, column=0, sticky="nsew")
-        self.creo_list.bind("<<ListboxSelect>>", lambda _: self._on_creo_list_select)
+        self.creo_list.bind("<<ListboxSelect>>", self._on_creo_list_select)
 
         self._creo_tree = ttk.Treeview(creo_panel, columns=("kind",), show="tree headings", selectmode="browse")
-        self._creo_tree.heading("#0", text="Model")
+        self._creo_tree.heading("[#0](#0)", text="Model")
         self._creo_tree.heading("kind", text="Kind")
-        self._creo_tree.column("#0", width=280, stretch=True)
+        self._creo_tree.column("[#0](#0)", width=280, stretch=True)
         self._creo_tree.column("kind", width=120, stretch=False)
-        self._creo_tree.bind("<<TreeviewSelect>>", lambda _: self._on_creo_tree_select)
+        self._creo_tree.bind("<<TreeviewSelect>>", self._on_creo_tree_select)
 
         # Middle: action buttons
         actions = ttk.Frame(body)
@@ -194,7 +194,7 @@ class ConnectionsView(tk.Frame):
 
         selection: Any = None
 
-        if self._view_mode == "hier":
+        if self._view_mode.get() == "hier":
             return
         else:
             try:

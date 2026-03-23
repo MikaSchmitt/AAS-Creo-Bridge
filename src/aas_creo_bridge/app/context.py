@@ -78,7 +78,7 @@ def get_creoson_client() -> Client | None:
     if _creoson_client:
         try:
             _creoson_client.connect()
-        except RuntimeError | ConnectionError | MissingKey:
+        except (RuntimeError, ConnectionError, MissingKey):
             _creoson_client = None
 
     if not _creoson_client:
@@ -90,7 +90,12 @@ def get_creoson_client() -> Client | None:
 def init_creo_session_tracker() -> None:
     global _creo_session_tracker
     if _creo_session_tracker is None:
-        _creo_session_tracker = CreoSessionTracker(client=get_creoson_client(), poll_interval_seconds=1)
+        client = get_creoson_client()
+        if client is None:
+            logger = get_logger(__name__)
+            logger.error("Unable to initialize CreoSessionTracker: Creoson client is unavailable.")
+            raise RuntimeError("Creoson client is unavailable; cannot initialize CreoSessionTracker.")
+        _creo_session_tracker = CreoSessionTracker(client=client, poll_interval_seconds=1)
         _creo_session_tracker.initialize()
         _creo_session_tracker.refresh()
 

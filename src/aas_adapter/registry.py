@@ -72,7 +72,7 @@ class AASXRegistry:
         if path in self._by_path:
             shells = self._by_path[path].result.shells
             self._by_path.pop(path)
-            for aas_id in self._by_path[path].result.shells:
+            for aas_id in shells:
                 self._by_id.pop(aas_id)
             self._notify_listeners(RegistryAction.remove, shells)
 
@@ -126,9 +126,10 @@ class AASXRegistry:
         """
         Clear all entries from the registry and notify listeners.
         """
+        shells = [shell for entry in self._by_path.values() for shell in entry.result.shells]
         self._by_path.clear()
         self._by_id.clear()
-        self._notify_listeners()
+        self._notify_listeners(RegistryAction.remove, shells)
 
     def add_listener(self, listener: Callable[[RegistryAction, list[str]], None]) -> None:
         """Register a callback to be notified when the registry changes."""

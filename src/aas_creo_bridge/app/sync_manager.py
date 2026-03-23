@@ -125,6 +125,12 @@ class SynchronizationManager:
             return None
 
         client = get_creoson_client()
+        if client is None:
+            _logger.error(
+                "Failed to synchronize AAS shell %s to Creo: Creoson client is not available",
+                aas_id,
+            )
+            return None
         model_name = import_model_into_creo(client, prepared.extracted_path)
 
         # aas_id is the unique identifier for the AAS instance
