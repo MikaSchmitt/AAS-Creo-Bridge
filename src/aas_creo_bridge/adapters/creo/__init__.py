@@ -7,7 +7,7 @@ from .session_tracking import (
     diff_session,
     snapshot_session,
 )
-from .set_parameter import update_parameter
+from .set_parameter import set_parameter, set_part_parameters
 from .types import (
     CreoSessionDelta,
     CreoSessionFile,
@@ -23,7 +23,8 @@ __all__ = ["connect_to_creoson",
            "CreoSessionTracker",
            "SessionChangeAction",
            "SessionChangeListener",
-           "update_parameter",
+           "set_parameter",
+           "set_part_parameters",
            "PartParameters",
            "Parameter",
            "CreoSessionFile",
