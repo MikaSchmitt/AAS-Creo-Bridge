@@ -10,7 +10,7 @@ application from source.
 - Python 3.12
 - Git
 - Creo Parametric 12 with JLink enabled
-- Java 17 or higher (unless using embedded JRE option)
+- Java 21 or higher (required when not using the embedded JRE option)
 
 ## 1) Clone the repository
 
@@ -54,8 +54,6 @@ pytest
 pytest tests\app\test_sync_manager.py
 
 ```
-
-## Troubleshooting
 
 ## Next
 

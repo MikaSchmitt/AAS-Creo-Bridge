@@ -192,14 +192,14 @@ while still being transparent about its behavior. Only if there is a critical er
 other issues are logged and the elements skipped. The following table lists how the extractor treats error that might
 occur during the extraction process.
 
-| Exception                         | Scenario                                                 | Behavior                                      |
-|-----------------------------------|----------------------------------------------------------|-----------------------------------------------|
-| `ValueError` (No FileVersion)     | A Model3D entry lacks any readable FileVersion.          | Raised immediately; caller must handle.       |
-| `ValueError` (Type mismatch)      | A submodel element is not the expected BaSyx type.       | Logged and re-raised with context.            |
-| `KeyError` (Unresolved reference) | A submodel reference cannot be resolved in object store. | Logged; iteration continues to next submodel. |
-| Missing `ConsumingApplication`    | File collection has no consuming applications.           | Returns empty list; not an error.             |
-| Missing `DigitalFile`             | FileVersion has no digital file reference.               | Version skipped if ExternalFile also absent.  |
-| Invalid MCAD document name        | Document name cannot be mapped to FileFormat.            | Logged as warning; document skipped.          |
+| Exception                         | Scenario                                                 | Behavior                                       |
+|-----------------------------------|----------------------------------------------------------|------------------------------------------------|
+| `ValueError` (No FileVersion)     | A Model3D entry lacks any readable FileVersion.          | Raised immediately; caller must handle.        |
+| `ValueError` (Type mismatch)      | A submodel element is not the expected BaSyx type.       | Logged and re-raised with context.             |
+| `KeyError` (Unresolved reference) | A submodel reference cannot be resolved in object store. | Skipped; iteration continues to next submodel. |
+| Missing `ConsumingApplication`    | File collection has no consuming applications.           | Returns empty list; not an error.              |
+| Missing `DigitalFile`             | FileVersion has no digital file reference.               | Version skipped if ExternalFile also absent.   |
+| Invalid MCAD document name        | Document name cannot be mapped to FileFormat.            | Logged as warning; document skipped.           |
 
 ## Testing
 

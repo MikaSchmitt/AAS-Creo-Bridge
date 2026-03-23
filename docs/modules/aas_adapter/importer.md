@@ -24,8 +24,8 @@ In short, this module does four things:
 
 ### AASX Format
 
-An AASX file is a ZIP-compressed archive that conforms to the [OPC (Open Packaging Convention)]
-(https://en.wikipedia.org/wiki/Open_Packaging_Conventions) standard. It contains:
+An AASX file is a ZIP-compressed archive that conforms to the
+[OPC (Open Packaging Convention)](https://en.wikipedia.org/wiki/Open_Packaging_Conventions) standard. It contains:
 
 - XML-serialized AAS model data (objects, submodels, collections, properties)
 - Supplementary files (binary model files, images, documents)
