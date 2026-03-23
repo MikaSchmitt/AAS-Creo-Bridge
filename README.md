@@ -11,4 +11,29 @@ This project enables the import and export of CAD data, including part informati
 - Synchronizing data between CAD software and the AAS
 - GUI‑based operation of the tool
 
-# Function Description between CAD softwares
+# Function overview between CAD software
+| Feature                           | Creo                                                     | Siemens NX                                     |
+|-----------------------------------|----------------------------------------------------------|------------------------------------------------|
+| Importing a 3D model 
+  from an AAS into CAD software     |                                                          |                                                |
+| Exporting a BOM
+  from CAD software into an AAS     |                                                          |                                                |
+| Embedding the AAS ID in the 
+  3D model                          |                                                          |                                                |
+| Assigning AAS IDs to a list of 
+  3D models                         |                                                          |                                                |
+
+# Graphical User Interface (GUI)
+The application provides several views, each covering different functional areas.
+
+## Import View
+- Opening and importing AASX files
+- Integrating external repositories
+- Overview of all imported AASs
+- Displaying relevant AAS information
+
+## Connection View
+- Managing the connection between CAD software and the AAS
+- Overview of existing links
+- Configuring synchronization settings
+- Starting import and export processes
