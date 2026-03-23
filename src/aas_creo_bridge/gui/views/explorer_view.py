@@ -3,6 +3,9 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
+from basyx.aas.model import AssetAdministrationShell, Property, MultiLanguageProperty, File
+
+from aas_adapter import check_expected_model, get_child_elements, get_value
 from aas_creo_bridge.app.context import get_aasx_registry, get_logger
 
 
@@ -11,6 +14,7 @@ class ExplorerView(tk.Frame):
         super().__init__(parent)
 
         # --- Header ---
+        self._node_properties: dict[str, list[list[str]]] = {}
         title = tk.Label(self, text="Explorer", font=("Segoe UI", 16, "bold"))
         title.pack(anchor="w")
 
@@ -140,7 +144,7 @@ class ExplorerView(tk.Frame):
 
         # For now, just reset the tree and show placeholder details.
         self._clear_tree()
-        self._load_placeholder_tree(aas_name=selected)
+        self._load_tree(aas_name=selected)
         self._show_details_text(f"Selected AAS: {selected}")
 
     def _on_tree_selection_changed(self, _event: object | None = None) -> None:
@@ -160,7 +164,14 @@ class ExplorerView(tk.Frame):
         if values:
             element_type = str(values[0])
 
-        self._show_details_text(f"Element: {label}\nType: {element_type}")
+        properties = self._node_properties.get(item_id, [])
+        properties_text = "\n".join(f" {item[0]}: {item[1]}" for item in properties)
+        if not properties_text:
+            properties_text = " (none)"
+
+        self._show_details_text(
+            f"Element: {label}\nType: {element_type}\nProperties:\n{properties_text}"
+        )
 
     # ---- Helpers ----
     def _show_details_text(self, text: str) -> None:
@@ -171,17 +182,40 @@ class ExplorerView(tk.Frame):
         lbl.pack(anchor="w")
 
     def _clear_tree(self) -> None:
+        self._node_properties.clear()
         for item in self.aas_tree.get_children(""):
             self.aas_tree.delete(item)
 
-    def _load_placeholder_tree(self, aas_name: str = "") -> None:
-        root_label = aas_name or "AAS"
-        root = self.aas_tree.insert("", "end", text=root_label, values=("AssetAdministrationShell",), open=True)
+    def _build_tree(self, parent, object_store, element):
+        index = 0
+        for element in get_child_elements(object_store, element):
+            if not isinstance(element, Property | MultiLanguageProperty | File):
+                # if it's an element of a submodel element list use an index instead if id_short
+                if "generated_submodel_list" in element.id_short:
+                    id_short = f"[{index}]"
+                    index += 1
+                else:
+                    id_short = element.id_short
 
-        sm = self.aas_tree.insert(root, "end", text="Submodels", values=("Collection",), open=True)
-        sm1 = self.aas_tree.insert(sm, "end", text="Identification", values=("Submodel",), open=True)
-        self.aas_tree.insert(sm1, "end", text="SerialNumber", values=("Property",))
-        self.aas_tree.insert(sm1, "end", text="Manufacturer", values=("Property",))
+                node = self.aas_tree.insert(parent, "end", text=id_short, values=(element.__class__.__name__,))
+                # self._node_properties.setdefault(node, []).append([element.id_short, str(get_value(element))])
+                self._build_tree(node, object_store, element)
+            else:
+                self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
+        return
 
-        sm2 = self.aas_tree.insert(sm, "end", text="Documentation", values=("Submodel",), open=True)
-        self.aas_tree.insert(sm2, "end", text="Manual.pdf", values=("File",))
+    def _load_tree(self, aas_name: str = ""):
+        if not aas_name:
+            return
+        self._clear_tree()
+
+        registry = get_aasx_registry()
+        aasx = registry.get(aas_name)
+        if not aasx:
+            return
+
+        aas = aasx.object_store.get_identifiable(aas_name)
+        check_expected_model(aas, AssetAdministrationShell)
+
+        root = self.aas_tree.insert("", "end", text=aas_name, values=("AssetAdministrationShell",), open=True)
+        self._build_tree(root, aasx.object_store, aas)

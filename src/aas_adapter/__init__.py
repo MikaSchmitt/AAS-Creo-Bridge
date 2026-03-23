@@ -36,7 +36,7 @@ See :mod:`~aas_adapter.models` for:
 """
 
 from aas_adapter.extractor import get_global_asset_id, get_models_from_aas
-from aas_adapter.helpers import get_value
+from aas_adapter.helpers import get_value, get_sm, get_child_sme, get_child_elements, check_expected_model
 from aas_adapter.importer import AASXImportResult, import_aasx
 from aas_adapter.materializer import materialize_model_file
 from aas_adapter.models import (
@@ -74,4 +74,8 @@ __all__ = [
     "import_aasx",
     "materialize_model_file",
     "select_best_model",
+    "check_expected_model",
+    "get_sm",
+    "get_child_sme",
+    "get_child_elements",
 ]

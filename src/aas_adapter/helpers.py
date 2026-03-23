@@ -25,7 +25,8 @@ from pathlib import Path
 from typing import Optional, TypeVar
 
 from basyx.aas import model
-from basyx.aas.model import base
+from basyx.aas.model import base, Submodel, SubmodelElementCollection, SubmodelElementList, \
+    AssetAdministrationShell, Property, File, DictObjectStore, SubmodelElement, MultiLanguageProperty
 
 from aas_adapter.models import FileFormat
 
@@ -192,3 +193,29 @@ def mcad_doc_name_to_cadenas_format(doc_name: str) -> FileFormat | None:
             return FileFormat(fmt_name, fmt_version, fmt_qualifier)
 
     return None
+
+
+def get_sm(object_store: DictObjectStore, aas: AssetAdministrationShell) -> Iterable[Submodel]:
+    sm = []
+    for sm_ref in aas.submodel:
+        sm.append(sm_ref.resolve(object_store))
+    return sm
+
+
+def get_child_sme(element: Submodel | SubmodelElementCollection | SubmodelElementList) -> \
+        Iterable[SubmodelElementCollection | SubmodelElementList | Property | File | MultiLanguageProperty]:
+    match element:
+        case Submodel():
+            return list(element.submodel_element or [])
+        case SubmodelElement():
+            return list(element.value or [])
+        case _:
+            return list(element) if isinstance(element, Iterable) else []
+
+
+def get_child_elements(object_store: DictObjectStore,
+                       element: AssetAdministrationShell | Submodel | SubmodelElementCollection | SubmodelElementList) -> \
+        Iterable[Submodel | SubmodelElementCollection | SubmodelElementList | Property | File | MultiLanguageProperty]:
+    if isinstance(element, AssetAdministrationShell):
+        return get_sm(object_store, element)
+    return get_child_sme(element)
