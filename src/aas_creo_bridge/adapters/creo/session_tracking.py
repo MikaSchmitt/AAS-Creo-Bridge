@@ -26,6 +26,12 @@ SessionChangeListener = Callable[[SessionChangeAction, list[CreoSessionFile]], N
 
 def snapshot_session(client: creopyson.Client) -> CreoSessionState:
     """Capture file list, per-file revision, and currently active file from Creo."""
+    try:
+        if not client.is_creo_running():
+            return CreoSessionState(files={}, active_file_name=None, captured_at=datetime.now(UTC))
+    except ConnectionError as e:
+        _logger.warning("Failed to connect to Creo: %s", e)
+        return CreoSessionState(files={}, active_file_name=None, captured_at=datetime.now(UTC))
     file_names = client.file_list() or []
     files: dict[str, CreoSessionFile] = {}
 
