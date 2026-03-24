@@ -29,6 +29,7 @@ class ExplorerView(tk.Frame):
         tk.Label(top_bar, text="AAS:").pack(side="left")
 
         self._selected_aas = tk.StringVar(value="No AAS loaded")
+        self._follow_active_part = tk.BooleanVar(value=True)
         self.aas_selector = ttk.Combobox(
             top_bar,
             textvariable=self._selected_aas,
@@ -38,6 +39,13 @@ class ExplorerView(tk.Frame):
         )
         self.aas_selector.pack(side="left", padx=(8, 0), fill="x", expand=True)
         self.aas_selector.bind("<<ComboboxSelected>>", self._on_aas_selected)
+
+        self.follow_active_check = ttk.Checkbutton(
+            top_bar,
+            text="Follow active part in Creo",
+            variable=self._follow_active_part,
+        )
+        self.follow_active_check.pack(side="left", padx=(12, 0))
 
         # --- Main area: two side-by-side views (tree + details frame) ---
         main_pane = ttk.Panedwindow(self, orient="horizontal")
@@ -108,11 +116,17 @@ class ExplorerView(tk.Frame):
             case SessionChangeAction.remove:
                 return
             case SessionChangeAction.active:
-                if True:
-                    aas_id = sync_manager.get_link_by_creo_model(parts[0].file_name).aas_shell_id
-                    if aas_id:
-                        self._selected_aas.set(aas_id)
-                        self._on_aas_selected()
+                if not self._follow_active_part.get() or not parts:
+                    return
+
+                link = sync_manager.get_link_by_creo_model(parts[0].file_name)
+                if not link:
+                    return
+
+                aas_id = link.aas_shell_id
+                if aas_id:
+                    self._selected_aas.set(aas_id)
+                    self._on_aas_selected()
                 return
             case SessionChangeAction.revision:
                 return
