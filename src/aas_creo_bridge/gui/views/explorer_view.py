@@ -6,7 +6,8 @@ from tkinter import ttk
 from basyx.aas.model import AssetAdministrationShell, Property, MultiLanguageProperty, File
 
 from aas_adapter import check_expected_model, get_child_elements, get_value
-from aas_creo_bridge.app.context import get_aasx_registry, get_logger
+from aas_creo_bridge.adapters.creo import CreoSessionFile, SessionChangeAction
+from aas_creo_bridge.app.context import get_aasx_registry, get_logger, get_creo_session_tracker, get_sync_manager
 
 
 class ExplorerView(tk.Frame):
@@ -87,6 +88,9 @@ class ExplorerView(tk.Frame):
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
 
+        tracker = get_creo_session_tracker()
+        tracker.add_listener(self._on_creo_session_changed)
+
     def _on_registry_changed(self, action: str, shells: list[str]) -> None:
         # Use all currently loaded shells from registry
         registry = get_aasx_registry()
@@ -95,6 +99,23 @@ class ExplorerView(tk.Frame):
             all_shells.extend(res.shells)
 
         self.set_aas_options(all_shells)
+
+    def _on_creo_session_changed(self, action: SessionChangeAction, parts: list[CreoSessionFile]) -> None:
+        sync_manager = get_sync_manager()
+        match action:
+            case SessionChangeAction.add:
+                return
+            case SessionChangeAction.remove:
+                return
+            case SessionChangeAction.active:
+                if True:
+                    aas_id = sync_manager.get_link_by_creo_model(parts[0].file_name).aas_shell_id
+                    if aas_id:
+                        self._selected_aas.set(aas_id)
+                        self._on_aas_selected()
+                return
+            case SessionChangeAction.revision:
+                return
 
     # ---- Hooks for a future AAS manager/controller ----
     def set_aas_options(self, names: list[str], *, select_first: bool = True) -> None:
