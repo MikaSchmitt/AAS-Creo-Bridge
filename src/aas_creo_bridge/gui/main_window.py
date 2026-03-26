@@ -15,7 +15,7 @@ from aas_creo_bridge.gui.views import HomeView, ImportView, ExplorerView, Connec
 
 
 class MainWindow:
-    def __init__(self) -> None:
+    def __init__(self, initial_view: str = "Home", startup_warning: str | None = None) -> None:
         self.root = tk.Tk()
         self.root.title("AAS-Creo-Bridge")
         self.root.minsize(900, 600)
@@ -38,7 +38,10 @@ class MainWindow:
 
         self.set_status("idle")
         self.logger.info("Application started.")
-        self.show_view("Home")
+        self.show_view(initial_view)
+
+        if startup_warning:
+            messagebox.showwarning("Startup warning", startup_warning)
 
     def _create_menu_bar(self) -> None:
         menubar = tk.Menu(self.root)

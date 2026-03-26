@@ -6,6 +6,12 @@ from typing import Union
 import creopyson
 from creopyson.exceptions import MissingKey
 
+from aas_creo_bridge.config import validate_setvars_bat
+
+
+class SetvarsConfigurationError(RuntimeError):
+    """Raised when setvars.bat is missing or invalid for CREOSON startup."""
+
 
 def connect_to_creoson(
         server_folder: Union[str, Path],
@@ -21,10 +27,15 @@ def connect_to_creoson(
     # 1. Define paths relative to the provided server folder
     server_folder_path = Path(server_folder)
     creoson_bat = server_folder_path / "creoson_run.bat"
+    setvars_bat = server_folder_path / "setvars.bat"
 
     # Verify the batch file exists before attempting to start
     if not creoson_bat.exists():
         raise FileNotFoundError(f"Creoson executable not found at: {creoson_bat}")
+
+    setvars_ok, setvars_error = validate_setvars_bat(setvars_bat)
+    if not setvars_ok:
+        raise SetvarsConfigurationError(setvars_error or f"Invalid setvars.bat at: {setvars_bat}")
 
     # 2. Launch the Creoson server process
     print(f"Launching Creoson server from: {creoson_bat}")

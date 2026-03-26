@@ -1,5 +1,6 @@
-from .creo_connection import connect_to_creoson
+from .creo_connection import connect_to_creoson, SetvarsConfigurationError
 from .model_import import import_model_into_creo
+from .probe import CreosonProbeResult, probe_creoson_status
 from .session_tracking import (
     CreoSessionTracker,
     SessionChangeAction,
@@ -17,6 +18,9 @@ from .types import (
 )
 
 __all__ = ["connect_to_creoson",
+           "SetvarsConfigurationError",
+           "CreosonProbeResult",
+           "probe_creoson_status",
            "import_model_into_creo",
            "snapshot_session",
            "diff_session",

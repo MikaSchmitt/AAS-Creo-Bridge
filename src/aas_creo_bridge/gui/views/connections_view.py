@@ -114,10 +114,11 @@ class ConnectionsView(tk.Frame):
 
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
-        get_creo_session_tracker().add_listener(self._on_creo_session_changed)
 
-        tracker = get_creo_session_tracker()
-        self.set_creo_parts([file for file in tracker.state.files])
+        tracker = self._safe_get_tracker()
+        if tracker is not None:
+            tracker.add_listener(self._on_creo_session_changed)
+            self.set_creo_parts([file for file in tracker.state.files])
 
     def _on_registry_changed(self, action: str, shells: list[str]) -> None:
         # Use all currently loaded shells from registry
@@ -137,8 +138,16 @@ class ConnectionsView(tk.Frame):
             return
         if action == SessionChangeAction.revision:
             return
-        tracker = get_creo_session_tracker()
+        tracker = self._safe_get_tracker()
+        if tracker is None:
+            return
         self.set_creo_parts([file for file in tracker.state.files])
+
+    def _safe_get_tracker(self):
+        try:
+            return get_creo_session_tracker()
+        except RuntimeError:
+            return None
 
     # ---- Public hooks for later wiring ----
     def set_aas_items(self, items: list[str]) -> None:
