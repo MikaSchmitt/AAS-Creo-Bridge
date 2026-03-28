@@ -10,7 +10,8 @@ creoson doesn't need to be extracted, which would be very slow.
 
 ### 1. Virtual Environment
 
-Ensure your Python virtual environment is set up with all dependencies. Refer to ... for more information.
+Ensure your Python virtual environment is set up with all dependencies. Refer to the [setup documentation](setup.md)
+for more information.
 
 ### 2. Install PyInstaller
 
@@ -21,9 +22,8 @@ python -m pip install pyinstaller
 
 ### 3. Creoson and JRE
 
-Ensure these exist in your repo root:
-
-- `creoson/` – Full CREOSON folder with JARs, JRE, configs
+Ensure the creoson binaries are present in the `creoson/` folder. Refer to the [setup documentation](setup.md)
+for more information. If the embedded JRE is missing it will also not be included in the build.
 
 ## Build the Executable
 
@@ -35,10 +35,9 @@ From the repo root, run:
 
 **What this does:**
 
-- Reads `AAS-Creo-Bridge.spec` configuration
 - Compiles Python code to bytecode
 - Bundles dependencies into `dist/AAS-Creo-Bridge/_internal/`
-- Includes `creoson/` folder as data
+- Includes `creoson/` folder
 - Creates `dist/AAS-Creo-Bridge/AAS-Creo-Bridge.exe`
 
 ## Verify the Build
@@ -86,7 +85,7 @@ Simply double-click or run from command line:
 
 - GUI window opens
 - If CREOSON is not configured, the Settings tab appears
-- User edits `bridge_settings.json` and `setvars.bat` as needed
+- Refer to the User Guide for more information on the configuration of CREOSON
 
 ## Path Resolution
 
