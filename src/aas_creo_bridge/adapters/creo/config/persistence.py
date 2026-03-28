@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
-from aas_creo_bridge.config.constants import DEFAULT_JSON_PORT
-from aas_creo_bridge.config.defaults import get_default_settings
-from aas_creo_bridge.config.models import CreosonSettings
-from aas_creo_bridge.config.paths import get_settings_path
+from .defaults import DEFAULT_JSON_PORT, get_default_settings
+from .paths import get_settings_path
 
 
 def load_creoson_settings() -> CreosonSettings:
+    from .setvars import CreosonSettings
+
     settings_path = get_settings_path()
     defaults = get_default_settings()
 

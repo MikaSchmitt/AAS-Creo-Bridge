@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from aas_creo_bridge import config
-from aas_creo_bridge.config import defaults, paths
-from aas_creo_bridge.config import CreosonSettings, DEFAULT_JSON_PORT
+from aas_creo_bridge.adapters.creo import DEFAULT_JSON_PORT, get_default_settings
+from aas_creo_bridge.adapters.creo import save_creoson_settings, load_creoson_settings
+from aas_creo_bridge.adapters.creo import CreosonSettings, validate_setvars_bat, ensure_setvars_exists
 
 
 def test_save_and_load_creoson_settings_roundtrip(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr(paths, "get_creoson_root", lambda: tmp_path)
+    monkeypatch.setattr("aas_creo_bridge.adapters.creo.config.paths.get_creoson_root", lambda: tmp_path)
 
     settings = CreosonSettings(
         proe_common="C:/Program Files/PTC/Creo 12.4.0.0/Common Files",
@@ -17,8 +17,8 @@ def test_save_and_load_creoson_settings_roundtrip(tmp_path: Path, monkeypatch) -
         json_port=DEFAULT_JSON_PORT,
     )
 
-    config.save_creoson_settings(settings)
-    loaded = config.load_creoson_settings()
+    save_creoson_settings(settings)
+    loaded = load_creoson_settings()
 
     assert loaded.proe_common == settings.proe_common
     assert loaded.proe_env == settings.proe_env
@@ -27,7 +27,7 @@ def test_save_and_load_creoson_settings_roundtrip(tmp_path: Path, monkeypatch) -
 
 
 def test_ensure_setvars_exists_generates_batch_file(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr(paths, "get_creoson_root", lambda: tmp_path)
+    monkeypatch.setattr("aas_creo_bridge.adapters.creo.config.paths.get_creoson_root", lambda: tmp_path)
 
     settings = CreosonSettings(
         proe_common="C:/Program Files/PTC/Creo 12.4.0.0/Common Files",
@@ -35,9 +35,9 @@ def test_ensure_setvars_exists_generates_batch_file(tmp_path: Path, monkeypatch)
         java_home="jre",
         json_port=DEFAULT_JSON_PORT,
     )
-    config.save_creoson_settings(settings)
+    save_creoson_settings(settings)
 
-    setvars_path = config.ensure_setvars_exists()
+    setvars_path = ensure_setvars_exists()
 
     assert setvars_path.exists()
     content = setvars_path.read_text(encoding="utf-8")
@@ -49,9 +49,9 @@ def test_ensure_setvars_exists_generates_batch_file(tmp_path: Path, monkeypatch)
 
 def test_default_java_home_prefers_embedded_jre(tmp_path: Path, monkeypatch) -> None:
     (tmp_path / "jre").mkdir()
-    monkeypatch.setattr(defaults, "get_creoson_root", lambda: tmp_path)
+    monkeypatch.setattr("aas_creo_bridge.adapters.creo.config.paths.get_creoson_root", lambda: tmp_path)
 
-    detected_defaults = config.get_default_settings()
+    detected_defaults = get_default_settings()
 
     assert detected_defaults.java_home == "jre"
 
@@ -60,7 +60,7 @@ def test_validate_setvars_bat_detects_missing_required_key(tmp_path: Path) -> No
     setvars = tmp_path / "setvars.bat"
     setvars.write_text("set PROE_COMMON=C:/PTC\nset PROE_ENV=x86e_win64\n", encoding="utf-8")
 
-    is_valid, error = config.validate_setvars_bat(setvars)
+    is_valid, error = validate_setvars_bat(setvars)
 
     assert not is_valid
     assert error is not None

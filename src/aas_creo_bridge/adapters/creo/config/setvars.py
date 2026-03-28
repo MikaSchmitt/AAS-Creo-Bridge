@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
-from aas_creo_bridge.config.constants import DEFAULT_JSON_PORT
-from aas_creo_bridge.config.models import CreosonSettings
-from aas_creo_bridge.config.paths import get_setvars_path
-from aas_creo_bridge.config.persistence import load_creoson_settings, save_creoson_settings
+from .defaults import DEFAULT_JSON_PORT
+from .paths import get_setvars_path
 
 
 REQUIRED_SETVARS_KEYS = ("PROE_COMMON", "PROE_ENV", "JAVA_HOME", "JSON_PORT")
 
+@dataclass(slots=True)
+class CreosonSettings:
+    proe_common: str
+    proe_env: str
+    java_home: str
+    json_port: int = DEFAULT_JSON_PORT
 
 def render_setvars(settings: CreosonSettings) -> str:
     lines = [
@@ -65,6 +70,8 @@ def ensure_setvars_exists() -> Path:
     setvars_path = get_setvars_path()
     if setvars_path.exists():
         return setvars_path
+
+    from .persistence import load_creoson_settings, save_creoson_settings
 
     settings = load_creoson_settings()
     save_creoson_settings(settings)

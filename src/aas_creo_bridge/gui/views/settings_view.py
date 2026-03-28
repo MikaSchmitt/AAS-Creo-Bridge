@@ -4,8 +4,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from aas_creo_bridge.adapters.creo import probe_creoson_status
-from aas_creo_bridge.config import (
+from aas_creo_bridge.adapters.creo import (
+    probe_creoson_status,
     CreosonSettings,
     DEFAULT_JSON_PORT,
     load_creoson_settings,

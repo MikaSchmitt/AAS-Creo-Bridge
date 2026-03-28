@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import creopyson
 from creopyson.exceptions import MissingKey
 
-from aas_creo_bridge.config import DEFAULT_JSON_PORT
+from .config.defaults import DEFAULT_JSON_PORT
 
 
 @dataclass(slots=True)

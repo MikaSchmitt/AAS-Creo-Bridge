@@ -6,7 +6,7 @@ from typing import Union
 import creopyson
 from creopyson.exceptions import MissingKey
 
-from aas_creo_bridge.config import validate_setvars_bat
+from .config.setvars import validate_setvars_bat
 
 
 class SetvarsConfigurationError(RuntimeError):

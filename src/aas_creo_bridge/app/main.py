@@ -6,7 +6,7 @@ from aas_creo_bridge.adapters.creo import SetvarsConfigurationError
 from aas_creo_bridge.app.context import init_log_store, init_aasx_registry, init_sync_manager, set_path_to_creoson, \
     init_creo_session_tracker, get_creo_session_tracker, get_logger
 from aas_creo_bridge.app.logging import setup_logging
-from aas_creo_bridge.config import ensure_setvars_exists
+from aas_creo_bridge.adapters.creo import ensure_setvars_exists
 from aas_creo_bridge.gui.main_window import MainWindow
 
 

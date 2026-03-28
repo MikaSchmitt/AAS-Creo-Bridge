@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from aas_creo_bridge.config.constants import DEFAULT_SETTINGS_FILENAME
+from .defaults import DEFAULT_SETTINGS_FILENAME
 
 
 def get_project_root() -> Path:
