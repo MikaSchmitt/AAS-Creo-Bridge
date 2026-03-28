@@ -240,18 +240,7 @@ class ExplorerView(tk.Frame):
     def _build_tree(self, parent, object_store, element):
         index = 0
         for element in get_child_elements(object_store, element):
-            if not isinstance(element, Property | MultiLanguageProperty | File):
-                # if it's an element of a submodel element list use an index instead if id_short
-                if "generated_submodel_list" in element.id_short:
-                    id_short = f"[{index}]"
-                    index += 1
-                else:
-                    id_short = element.id_short
-
-                node = self.aas_tree.insert(parent, "end", text=id_short, values=(element.__class__.__name__,))
-                # self._node_properties.setdefault(node, []).append([element.id_short, str(get_value(element))])
-                self._build_tree(node, object_store, element)
-            elif isinstance(element, Property):
+            if isinstance(element, Property):
                 self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
             elif isinstance(element, MultiLanguageProperty):
                 mlp = get_value(element)
@@ -262,7 +251,15 @@ class ExplorerView(tk.Frame):
             elif isinstance(element, File):
                 self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
                 self._node_properties.setdefault(parent, []).append([element.id_short, str(element.content_type)])
-
+            else:
+                # if it's an element of a submodel element list use an index instead if id_short
+                if "generated_submodel_list" in element.id_short:
+                    id_short = f"[{index}]"
+                    index += 1
+                else:
+                    id_short = element.id_short
+                node = self.aas_tree.insert(parent, "end", text=id_short, values=(element.__class__.__name__,))
+                self._build_tree(node, object_store, element)
         return
 
     def _load_tree(self, aas_name: str = ""):
@@ -279,4 +276,6 @@ class ExplorerView(tk.Frame):
         check_expected_model(aas, AssetAdministrationShell)
 
         root = self.aas_tree.insert("", "end", text=aas_name, values=("AssetAdministrationShell",), open=True)
+        value = aas.asset_information.global_asset_id
+        self._node_properties.setdefault(root, []).append(["Global Asset Id", str(value)])
         self._build_tree(root, aasx.object_store, aas)
