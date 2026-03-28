@@ -37,7 +37,14 @@ def test_bom_export_writes_bom_to_file(creo_client) -> None:
     set_part_parameters(creo_client, part)
 
     asm_file = re.sub(r"\.\d+$", "", ASM_PATH.name)
-    bom = get_assembly_data(creo_client, file_=asm_file, include_parameters=True)
+    bom = get_assembly_data(
+        creo_client,
+        file_=asm_file,
+        include_parameters=True,
+        include_mass_props=True,
+        include_bounding_box=True,
+        get_transforms=True,
+    )
 
     export_path = Path(__file__).resolve().parent / "bom_export.json"
     export_path.write_text(json.dumps(asdict(bom), indent=2, ensure_ascii=True), encoding="utf-8")
