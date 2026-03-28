@@ -9,11 +9,8 @@ from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
 from aas_creo_bridge.adapters.creo.set_parameter import set_part_parameters
 from aas_creo_bridge.adapters.creo.types import Parameter, PartParameters
 
-
 CREOSON_DIR = Path(__file__).resolve().parents[2] / "creoson"
-ASM_PATH = Path(
-    r"C:\OneDrive\Hochschule Karlsruhe\Entwicklungsprojekt - General\04_Beispieldateien\Pliers_Creo_Baugruppe\Tutorial 2 Pliers Parts\plier_mechanism.asm.23"
-)
+ASM_PATH = Path(__file__).resolve().parents[2] / "fixtures/creo_test_asm/suction_gripper.asm.1"
 
 
 @pytest.fixture(scope="module")
@@ -21,6 +18,7 @@ def creo_client():
     return connect_to_creoson(CREOSON_DIR)
 
 
+@pytest.mark.integration
 def test_set_part_parameters_sets_parameter(creo_client) -> None:
     import_model_into_creo(creo_client, ASM_PATH)
     part = PartParameters(

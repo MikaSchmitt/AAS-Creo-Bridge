@@ -13,11 +13,8 @@ from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
 from aas_creo_bridge.adapters.creo.set_parameter import set_part_parameters
 from aas_creo_bridge.adapters.creo.types import Parameter, PartParameters
 
-
 CREOSON_DIR = Path(__file__).resolve().parents[2] / "creoson"
-ASM_PATH = Path(
-    r"C:\OneDrive\Hochschule Karlsruhe\Entwicklungsprojekt - General\04_Beispieldateien\Pliers_Creo_Baugruppe\Tutorial 2 Pliers Parts\plier_mechanism.asm.23"
-)
+ASM_PATH = Path(__file__).resolve().parents[1] / "fixtures/creo_test_asm/suction_gripper.asm.1"
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +22,7 @@ def creo_client():
     return connect_to_creoson(CREOSON_DIR)
 
 
+@pytest.mark.integration
 def test_bom_export_writes_bom_to_file(creo_client) -> None:
     import_model_into_creo(creo_client, ASM_PATH)
     part = PartParameters(
@@ -46,8 +44,5 @@ def test_bom_export_writes_bom_to_file(creo_client) -> None:
         get_transforms=True,
     )
 
-    export_path = Path(__file__).resolve().parent / "bom_export.json"
-    export_path.write_text(json.dumps(asdict(bom), indent=2, ensure_ascii=True), encoding="utf-8")
-
-    assert export_path.exists()
-    assert export_path.read_text(encoding="utf-8").strip()
+    export_path = Path(__file__).resolve().parents[1] / "fixtures/bom_export.json"
+    assert json.dumps(asdict(bom), indent=2, ensure_ascii=True) == export_path.read_text(encoding="utf-8").strip()
