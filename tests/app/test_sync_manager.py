@@ -79,6 +79,28 @@ class TestSynchronizationManager(unittest.TestCase):
         self.assertIsNone(manager.get_link_by_aas_id("aas_1"))
         self.assertIsNone(manager.get_link_by_creo_model("model_1"))
 
+    def test_link_normalizes_creo_model_name_to_lowercase(self) -> None:
+        from aas_creo_bridge.app.context import get_sync_manager
+
+        manager = get_sync_manager()
+        manager.unlink_all()
+        manager.link("aas_1", "Model_ABC.PRT")
+
+        self.assertEqual(manager.get_link_by_aas_id("aas_1").creo_model_name, "model_abc.prt")
+        self.assertEqual(manager.get_link_by_creo_model("MODEL_ABC.PRT").aas_shell_id, "aas_1")
+
+    def test_unlink_by_creo_model_is_case_insensitive(self) -> None:
+        from aas_creo_bridge.app.context import get_sync_manager
+
+        manager = get_sync_manager()
+        manager.unlink_all()
+        manager.link("aas_1", "Part_01")
+
+        manager.unlink("PART_01")
+
+        self.assertIsNone(manager.get_link_by_aas_id("aas_1"))
+        self.assertIsNone(manager.get_link_by_creo_model("part_01"))
+
     """
     @patch("aas_creo_bridge.app.sync_manager.materialize_model_file")
     @patch("aas_creo_bridge.app.sync_manager.select_best_model")
