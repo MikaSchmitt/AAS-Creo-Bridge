@@ -1,20 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
-from .defaults import DEFAULT_JSON_PORT
+from .constants import DEFAULT_JSON_PORT
+from .models import CreosonSettings
 from .paths import get_setvars_path
-
 
 REQUIRED_SETVARS_KEYS = ("PROE_COMMON", "PROE_ENV", "JAVA_HOME", "JSON_PORT")
 
-@dataclass(slots=True)
-class CreosonSettings:
-    proe_common: str
-    proe_env: str
-    java_home: str
-    json_port: int = DEFAULT_JSON_PORT
 
 def render_setvars(settings: CreosonSettings) -> str:
     lines = [
@@ -76,4 +69,3 @@ def ensure_setvars_exists() -> Path:
     settings = load_creoson_settings()
     save_creoson_settings(settings)
     return write_setvars_bat(settings)
-

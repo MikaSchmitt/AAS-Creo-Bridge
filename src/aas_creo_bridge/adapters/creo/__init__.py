@@ -1,3 +1,14 @@
+from .config.constants import DEFAULT_JSON_PORT, DEFAULT_SETTINGS_FILENAME
+from .config.defaults import get_default_settings, detect_proe_commons
+from .config.persistence import load_creoson_settings, save_creoson_settings
+from .config.setvars import (
+    REQUIRED_SETVARS_KEYS,
+    ensure_setvars_exists,
+    render_setvars,
+    validate_setvars_bat,
+    write_setvars_bat,
+    CreosonSettings,
+)
 from .creo_connection import connect_to_creoson, SetvarsConfigurationError
 from .model_import import import_model_into_creo
 from .probe import CreosonProbeResult, probe_creoson_status
@@ -16,17 +27,6 @@ from .types import (
     PartParameters,
     Parameter,
 )
-from .config.defaults import DEFAULT_JSON_PORT, DEFAULT_SETTINGS_FILENAME, get_default_settings
-from .config.setvars import (
-    REQUIRED_SETVARS_KEYS,
-    ensure_setvars_exists,
-    render_setvars,
-    validate_setvars_bat,
-    write_setvars_bat,
-    CreosonSettings,
-)
-
-from .config.persistence import load_creoson_settings, save_creoson_settings
 
 __all__ = ["connect_to_creoson",
            "SetvarsConfigurationError",
@@ -49,11 +49,12 @@ __all__ = ["connect_to_creoson",
            "DEFAULT_SETTINGS_FILENAME",
            "REQUIRED_SETVARS_KEYS",
            "render_setvars",
-            "write_setvars_bat",
-            "validate_setvars_bat",
-            "ensure_setvars_exists",
+           "write_setvars_bat",
+           "validate_setvars_bat",
+           "ensure_setvars_exists",
            "CreosonSettings",
            "load_creoson_settings",
            "save_creoson_settings",
            "get_default_settings",
+           "detect_proe_commons",
            ]

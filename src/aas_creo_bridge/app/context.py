@@ -21,6 +21,8 @@ _creoson_client: Client | None = None
 _path_to_creoson: Path | None = None
 _creo_session_tracker: CreoSessionTracker | None = None
 
+_logger = logging.getLogger(__name__)
+
 
 def init_log_store() -> LogStore:
     global _log_store
@@ -82,7 +84,11 @@ def get_creoson_client() -> Client | None:
             _creoson_client = None
 
     if not _creoson_client:
-        _creoson_client = connect_to_creoson(_path_to_creoson)
+        try:
+            _creoson_client = connect_to_creoson(_path_to_creoson)
+        except Exception as e:
+            _logger.error(f"Failed to connect to Creoson: {e}")
+            return None
 
     return _creoson_client
 

@@ -8,6 +8,7 @@ from aas_creo_bridge.adapters.creo import (
     probe_creoson_status,
     CreosonSettings,
     DEFAULT_JSON_PORT,
+    detect_proe_commons,
     load_creoson_settings,
     save_creoson_settings,
     write_setvars_bat,
@@ -36,8 +37,14 @@ class SettingsView(tk.Frame):
         form.columnconfigure(1, weight=1)
 
         ttk.Label(form, text="PROE_COMMON").grid(row=0, column=0, sticky="w", padx=(0, 8), pady=(0, 8))
-        ttk.Entry(form, textvariable=self._proe_common_var).grid(row=0, column=1, sticky="ew", pady=(0, 8))
-        ttk.Button(form, text="Browse", command=self._choose_proe_common).grid(row=0, column=2, padx=(8, 0), pady=(0, 8))
+        self._proe_common_combo = ttk.Combobox(
+            form,
+            textvariable=self._proe_common_var,
+            state="normal",
+        )
+        self._proe_common_combo.grid(row=0, column=1, sticky="ew", pady=(0, 8))
+        ttk.Button(form, text="Browse", command=self._choose_proe_common).grid(row=0, column=2, padx=(8, 0),
+                                                                               pady=(0, 8))
 
         ttk.Label(form, text="PROE_ENV").grid(row=1, column=0, sticky="w", padx=(0, 8), pady=(0, 8))
         ttk.Combobox(
@@ -68,11 +75,26 @@ class SettingsView(tk.Frame):
 
     def _load(self) -> None:
         settings = load_creoson_settings()
+        self._populate_proe_common_options(settings.proe_common)
         self._proe_common_var.set(settings.proe_common)
         self._proe_env_var.set(settings.proe_env)
         self._java_home_var.set(settings.java_home)
         self._json_port_var.set(str(DEFAULT_JSON_PORT))
         self._status_var.set("Loaded current settings.")
+
+    def _populate_proe_common_options(self, selected: str = "") -> None:
+        options: list[str] = []
+
+        for path in detect_proe_commons():
+            candidate = str(path).strip()
+            if candidate and candidate not in options:
+                options.append(candidate)
+
+        selected = selected.strip()
+        if selected and selected not in options:
+            options.append(selected)
+
+        self._proe_common_combo.configure(values=options)
 
     def _save(self) -> None:
         proe_common = self._proe_common_var.get().strip()
@@ -100,6 +122,7 @@ class SettingsView(tk.Frame):
 
         save_creoson_settings(settings)
         setvars_path = write_setvars_bat(settings)
+        self._populate_proe_common_options(proe_common)
         self._status_var.set(f"Saved. Generated: {setvars_path}")
         messagebox.showinfo("Settings saved", f"setvars.bat updated:\n{setvars_path}")
 
@@ -107,6 +130,7 @@ class SettingsView(tk.Frame):
         selected = filedialog.askdirectory(title="Select Creo Common Files folder")
         if selected:
             self._proe_common_var.set(selected)
+            self._populate_proe_common_options(selected)
 
     def _choose_java_home(self) -> None:
         selected = filedialog.askdirectory(title="Select JAVA_HOME folder")
@@ -122,4 +146,3 @@ class SettingsView(tk.Frame):
             "CREOSON Test",
             f"CREOSON is {creoson_status}.\nCreo is {creo_status}.\n\n{result.details}",
         )
-

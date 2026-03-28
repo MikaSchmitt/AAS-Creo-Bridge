@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from aas_creo_bridge.adapters.creo import CreosonSettings, validate_setvars_bat, ensure_setvars_exists
 from aas_creo_bridge.adapters.creo import DEFAULT_JSON_PORT, get_default_settings
 from aas_creo_bridge.adapters.creo import save_creoson_settings, load_creoson_settings
-from aas_creo_bridge.adapters.creo import CreosonSettings, validate_setvars_bat, ensure_setvars_exists
+from aas_creo_bridge.adapters.creo.config.defaults import sort_creo_common_paths_by_version
 
 
 def test_save_and_load_creoson_settings_roundtrip(tmp_path: Path, monkeypatch) -> None:
@@ -67,3 +68,13 @@ def test_validate_setvars_bat_detects_missing_required_key(tmp_path: Path) -> No
     assert "JAVA_HOME" in error
 
 
+def test_sort_creo_common_paths_by_version_orders_by_numeric_version() -> None:
+    candidates = [
+        Path("E:/Program Files/PTC/Creo 9.0.3.0/Common Files"),
+        Path("E:/Program Files/PTC/Creo 10.0.0.0/Common Files"),
+        Path("E:/Program Files/PTC/Creo 10.0.1.0/Common Files"),
+    ]
+
+    sorted_candidates = sort_creo_common_paths_by_version(candidates)
+
+    assert str(sorted_candidates[-1].as_posix()).endswith("Creo 10.0.1.0/Common Files")

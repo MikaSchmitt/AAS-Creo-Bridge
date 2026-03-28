@@ -6,7 +6,8 @@ from typing import Union
 import creopyson
 from creopyson.exceptions import MissingKey
 
-from .config.setvars import validate_setvars_bat
+from .config.persistence import load_creoson_settings
+from .config.setvars import validate_setvars_bat, write_setvars_bat
 
 
 class SetvarsConfigurationError(RuntimeError):
@@ -32,6 +33,10 @@ def connect_to_creoson(
     # Verify the batch file exists before attempting to start
     if not creoson_bat.exists():
         raise FileNotFoundError(f"Creoson executable not found at: {creoson_bat}")
+
+    if not setvars_bat.exists():
+        settings = load_creoson_settings()
+        write_setvars_bat(settings)
 
     setvars_ok, setvars_error = validate_setvars_bat(setvars_bat)
     if not setvars_ok:

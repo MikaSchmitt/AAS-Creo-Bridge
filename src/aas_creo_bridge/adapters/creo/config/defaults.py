@@ -2,28 +2,57 @@ from __future__ import annotations
 
 import os
 import platform
+import re
+import string
 from pathlib import Path
 
-# Constants
-DEFAULT_JSON_PORT = 9056
-DEFAULT_SETTINGS_FILENAME = "bridge_settings.json"
+from aas_adapter.models import Version
+from .constants import DEFAULT_JSON_PORT
+from .models import CreosonSettings
+
+_CREO_VERSION_PATTERN = re.compile(r"Creo\s+([0-9]+(?:\.[0-9]+)*)", re.IGNORECASE)
 
 
-def _detect_proe_common() -> str:
-    ptc_root = Path("C:/Program Files/PTC")
-    if not ptc_root.exists():
-        return ""
+def _parse_creo_version(path: Path) -> Version:
+    match = _CREO_VERSION_PATTERN.search(path.as_posix())
+    if not match:
+        return Version("")
+    return Version(match.group(1))
+
+
+def sort_creo_common_paths_by_version(paths: list[Path]) -> list[Path]:
+    return sorted(paths, key=lambda path: (_parse_creo_version(path), path.as_posix()))
+
+
+def detect_proe_commons() -> list[Path]:
+    ptc_root = None
+
+    for letter in string.ascii_uppercase:
+        root = Path(f"{letter}:/Program Files/PTC")
+        if root.exists():
+            ptc_root = root
+            break
+
+    if not ptc_root:
+        return []
 
     candidates: list[Path] = []
-    for creo_dir in ptc_root.glob("Creo*"):
+    for creo_dir in ptc_root.glob("Creo *"):
         common_dir = creo_dir / "Common Files"
         if common_dir.is_dir():
             candidates.append(common_dir)
 
     if not candidates:
-        return ""
+        return []
 
-    return str(sorted(candidates)[-1])
+    return candidates
+
+
+def _detect_latest_proe_common() -> str:
+    candidates = detect_proe_commons()
+    if not candidates:
+        return ""
+    return str(sort_creo_common_paths_by_version(candidates)[-1])
 
 
 def _detect_proe_env() -> str:
@@ -38,9 +67,9 @@ def _detect_java_home() -> str:
         return "jre"
 
     for candidate in (
-        os.environ.get("JAVA_HOME"),
-        "C:/Program Files/Java/jre21",
-        "C:/Program Files (x86)/Java/jre21",
+            os.environ.get("JAVA_HOME"),
+            "C:/Program Files/Java/jre21",
+            "C:/Program Files (x86)/Java/jre21",
     ):
         if candidate and Path(candidate).is_dir():
             return candidate
@@ -64,10 +93,9 @@ def get_default_settings() -> CreosonSettings:
     Returns:
         CreosonSettings: Settings object populated with detected defaults.
     """
-    from .setvars import CreosonSettings
 
     return CreosonSettings(
-        proe_common=_detect_proe_common(),
+        proe_common=_detect_latest_proe_common(),
         proe_env=_detect_proe_env(),
         java_home=_detect_java_home(),
         json_port=DEFAULT_JSON_PORT,

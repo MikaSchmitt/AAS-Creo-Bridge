@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .defaults import DEFAULT_SETTINGS_FILENAME
+from .constants import DEFAULT_SETTINGS_FILENAME
 
 
 def get_project_root() -> Path:
-    return Path(__file__).resolve().parents[3]
+    return Path(__file__).resolve().parents[5]
 
 
 def get_creoson_root() -> Path:
@@ -19,4 +19,3 @@ def get_settings_path() -> Path:
 
 def get_setvars_path() -> Path:
     return get_creoson_root() / "setvars.bat"
-

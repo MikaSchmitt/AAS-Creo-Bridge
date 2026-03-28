@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 from dataclasses import asdict
 
-from .defaults import DEFAULT_JSON_PORT, get_default_settings
+from .constants import DEFAULT_JSON_PORT
+from .defaults import get_default_settings
+from .models import CreosonSettings
 from .paths import get_settings_path
 
 
 def load_creoson_settings() -> CreosonSettings:
-    from .setvars import CreosonSettings
-
     settings_path = get_settings_path()
     defaults = get_default_settings()
 
@@ -35,4 +35,3 @@ def save_creoson_settings(settings: CreosonSettings) -> None:
 
     with settings_path.open("w", encoding="utf-8") as stream:
         json.dump(payload, stream, indent=2)
-

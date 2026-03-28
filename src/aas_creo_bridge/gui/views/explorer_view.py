@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import tkinter as tk
 from tkinter import ttk
 
@@ -8,6 +9,8 @@ from basyx.aas.model import AssetAdministrationShell, Property, MultiLanguagePro
 from aas_adapter import check_expected_model, get_child_elements, get_value
 from aas_creo_bridge.adapters.creo import CreoSessionFile, SessionChangeAction
 from aas_creo_bridge.app.context import get_aasx_registry, get_logger, get_creo_session_tracker, get_sync_manager
+
+_logger = logging.getLogger(__name__)
 
 
 class ExplorerView(tk.Frame):
@@ -96,8 +99,11 @@ class ExplorerView(tk.Frame):
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
 
-        tracker = get_creo_session_tracker()
-        tracker.add_listener(self._on_creo_session_changed)
+        try:
+            tracker = get_creo_session_tracker()
+            tracker.add_listener(self._on_creo_session_changed)
+        except Exception as e:
+            _logger.error(f"Failed to subscribe to Creo session changes: {e}")
 
     def _on_registry_changed(self, action: str, shells: list[str]) -> None:
         # Use all currently loaded shells from registry

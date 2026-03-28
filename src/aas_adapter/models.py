@@ -47,7 +47,7 @@ class Version:
             remainder = remainder.replace(self.name, " ").strip()
         self.name = self.name.strip()
 
-        version_match = re.match(r"(\d+(\.*\d+){0,2})", remainder)
+        version_match = re.match(r"(\d+(\.*\d+){0,3})", remainder)
         version = "" if version_match is None else version_match.group(1)
         remainder = remainder.replace(version, " ")
         if remainder.strip() != "":
@@ -56,7 +56,7 @@ class Version:
             )
 
         versions: list[int] = [int(v) for v in version.split(".")]
-        versions.extend([0, 0, 0])
+        versions.extend([0, 0, 0, 0])
 
         self.major, self.minor, self.patch = versions[0:3]
 
@@ -118,6 +118,48 @@ class Version:
             if self.minor != other.minor:
                 return self.minor >= other.minor
             return self.patch >= other.patch
+        return False
+
+    def __lt__(self, other: object) -> bool:
+        """
+        Check if this version is less than another.
+
+        Comparison is performed component-wise: name, major, minor, then patch.
+
+        :param other: The other version to compare with.
+        :type other: object
+        :return: True if this version is greater than or equal to other, False otherwise.
+        :rtype: bool
+        """
+        if isinstance(other, Version):
+            if self.name != other.name:
+                return False
+            if self.major != other.major:
+                return self.major < other.major
+            if self.minor != other.minor:
+                return self.minor < other.minor
+            return self.patch < other.patch
+        return False
+
+    def __gt__(self, other):
+        """
+        Check if this version is grater than another.
+
+        Comparison is performed component-wise: name, major, minor, then patch.
+
+        :param other: The other version to compare with.
+        :type other: object
+        :return: True if this version is greater than or equal to other, False otherwise.
+        :rtype: bool
+        """
+        if isinstance(other, Version):
+            if self.name != other.name:
+                return False
+            if self.major != other.major:
+                return self.major > other.major
+            if self.minor != other.minor:
+                return self.minor > other.minor
+            return self.patch > other.patch
         return False
 
     def to_tuple(self):
