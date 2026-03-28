@@ -16,13 +16,18 @@ While Creo and PyCharm are proprietary software products, the AASX Package Explo
 
 
 ## Use Cases 
-At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two specific use cases: After-Sales and Engineering.
+At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two specific use cases: Engineering and After-Sales.
+
+
+### Engineering Phase
+
 
 
 ### After-Sales Phase 
 #### 1. Scenario Description
    
   Once the product has been delivered, the after‑sales phase begins, including: maintenance, repair, and spare parts management. The CAD assemblies serve    as the central reference point for all service-related activities. Service technicians use these digital models, along with derived views such as          exploded views and assembly diagrams, to carry out maintenance tasks correctly and reliably. 
+
 
 #### 2. Workflow 
 
@@ -37,6 +42,7 @@ At the beginning of this project, several functional areas of a hypothetical ind
 
   ##### Feedback 
   If a specific issue occurs repeatedly, it is documented in the after‑sales system. This feedback is routed through the AAS back to the engineering         department, enabling design improvements where necessary. 
+
 
 #### 3. Benefits
 
