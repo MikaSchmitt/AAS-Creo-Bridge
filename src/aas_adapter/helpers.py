@@ -85,16 +85,12 @@ def get_value(
 
     sme = element
 
-    # Prefer resolving nested elements by idShort when a key is provided.
-    # BaSyx containers implement UniqueIdShortNamespace, but test doubles may only
-    # provide a compatible get_referable() method.
     if key:
         if isinstance(element, model.UniqueIdShortNamespace) or hasattr(
                 element, "get_referable"
         ):
             sme = element.get_referable(key)
 
-    # Be defensive: some objects (e.g., collections) may not have a .value attribute.
     return getattr(sme, "value", None)
 
 
@@ -209,8 +205,6 @@ def get_child_sme(element: Submodel | SubmodelElementCollection | SubmodelElemen
             return list(element.submodel_element or [])
         case SubmodelElement():
             return list(element.value or [])
-        case _:
-            return list(element) if isinstance(element, Iterable) else []
 
 
 def get_child_elements(object_store: DictObjectStore,

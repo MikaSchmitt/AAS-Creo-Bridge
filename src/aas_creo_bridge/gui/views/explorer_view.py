@@ -79,7 +79,7 @@ class ExplorerView(tk.Frame):
         header = ttk.Label(right, text="Details", font=("Segoe UI", 12, "bold"))
         header.pack(anchor="w")
 
-        self.details_container = ttk.Frame(right)
+        self.details_container = tk.Frame(right)
         self.details_container.pack(fill="both", expand=True, pady=(8, 0))
 
         self.details_placeholder = ttk.Label(
@@ -213,8 +213,24 @@ class ExplorerView(tk.Frame):
         for child in self.details_container.winfo_children():
             child.destroy()
 
-        lbl = ttk.Label(self.details_container, text=text, justify="left")
-        lbl.pack(anchor="w")
+        # Use a Text widget for selectable/copyable text
+        text_widget = tk.Text(
+            self.details_container,
+            height=10,
+            width=50,
+            wrap="word",
+            state="disabled",  # Read-only
+            bg=self.details_container.cget("bg"),
+            relief="flat",
+            bd=0,
+            font=("Segoe UI", 10)
+        )
+        text_widget.pack(anchor="w", fill="both", expand=True)
+
+        # Enable temporarily to insert text, then disable again
+        text_widget.config(state="normal")
+        text_widget.insert("1.0", text)
+        text_widget.config(state="disabled")
 
     def _clear_tree(self) -> None:
         self._node_properties.clear()
@@ -235,8 +251,18 @@ class ExplorerView(tk.Frame):
                 node = self.aas_tree.insert(parent, "end", text=id_short, values=(element.__class__.__name__,))
                 # self._node_properties.setdefault(node, []).append([element.id_short, str(get_value(element))])
                 self._build_tree(node, object_store, element)
-            else:
+            elif isinstance(element, Property):
                 self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
+            elif isinstance(element, MultiLanguageProperty):
+                mlp = get_value(element)
+                if mlp:
+                    # get the en field or fallback to the first element if it doesn't exist
+                    value = mlp.get("en") or next(iter(mlp.values()), None)
+                    self._node_properties.setdefault(parent, []).append([element.id_short, str(value)])
+            elif isinstance(element, File):
+                self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
+                self._node_properties.setdefault(parent, []).append([element.id_short, str(element.content_type)])
+
         return
 
     def _load_tree(self, aas_name: str = ""):
