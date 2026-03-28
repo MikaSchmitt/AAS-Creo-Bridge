@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from aas_creo_bridge.adapters.creo import SetvarsConfigurationError
+from aas_creo_bridge.adapters.creo import ensure_setvars_exists
 from aas_creo_bridge.app.context import init_log_store, init_aasx_registry, init_sync_manager, set_path_to_creoson, \
     init_creo_session_tracker, get_creo_session_tracker, get_logger
 from aas_creo_bridge.app.logging import setup_logging
-from aas_creo_bridge.adapters.creo import ensure_setvars_exists
 from aas_creo_bridge.gui.main_window import MainWindow
 
 
@@ -16,7 +17,13 @@ def main() -> None:
     logger = get_logger(__name__)
     init_aasx_registry()
     init_sync_manager()
-    set_path_to_creoson(Path(Path(__file__).parent.parent.parent.parent / "creoson"))  # hardcoded for now
+
+    # Resolve CREOSON path: handle both frozen exe and source execution
+    if getattr(sys, "frozen", False):
+        creoson_path = Path(sys.executable).parent / "_internal" / "creoson"
+    else:
+        creoson_path = Path(__file__).parent.parent.parent.parent / "creoson"
+    set_path_to_creoson(creoson_path)
     ensure_setvars_exists()
 
     initial_view = "Home"
