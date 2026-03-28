@@ -8,9 +8,9 @@ from aas_creo_bridge.adapters.creo.creo_connection import connect_to_creoson
 from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
 
 
-CREOSON_DIR = Path(r"C:\Users\T\Documents\PycharmProjects\AAS-Creo-Bridge\creoson")
+CREOSON_DIR = Path(__file__).resolve().parents[2] / "creoson"
 ASM_PATH = Path(
-    r"C:\OneDrive\Hochschule Karlsruhe\Entwicklungsprojekt - General\04_Beispieldateien\Pliers_Creo_Baugruppe\Tutorial 2 Pliers Parts\plier_mechanism.asm"
+    r"C:\OneDrive\Hochschule Karlsruhe\Entwicklungsprojekt - General\04_Beispieldateien\Pliers_Creo_Baugruppe\Tutorial 2 Pliers Parts\plier_mechanism.asm.23"
 )
 STEP_PATH = Path(
     r"C:\OneDrive\Hochschule Karlsruhe\Entwicklungsprojekt - General\04_Beispieldateien\GPLE60-3S\GPLE60-3S.stp"
