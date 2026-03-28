@@ -16,8 +16,43 @@ While Creo and PyCharm are proprietary software products, the AASX Package Explo
 
 
 ## Use Cases 
-At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two specific use cases: After Sales and Engineering.
+At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two specific use cases: After-Sales and Engineering.
 
-### After Sales
+
+### After-Sales Phase 
+1. Scenario Description
+   
+  Once the product has been delivered, the after‑sales phase begins, including: maintenance, repair, and spare parts management. The CAD assemblies serve    as the central reference point for all service-related activities. Service technicians use these digital models, along with derived views such as          exploded views and assembly diagrams, to carry out maintenance tasks correctly and reliably. 
+
+2. Workflow 
+
+  Preparation 
+  A customer reports a malfunction. The service technician opens the relevant assembly in Creo, and the corresponding disassembly instructions (from the     AAS) are automatically displayed in a second window. 
+
+  Identification 
+  The technician selects the affected component directly within the CAD model, and all relevant metadata such as part numbers and material specifications    are displayed automatically. 
+
+  Repair 
+  The technician follows the step‑by‑step instructions provided via the AAS. These instructions include information on required tools, safety                considerations, and other relevant aspects. 
+
+  Feedback 
+  If a specific issue occurs repeatedly, it is documented in the after‑sales system. This feedback is routed through the AAS back to the engineering         department, enabling design improvements where necessary. 
+
+3. Benefits
+
+  Increased Efficiency
+  Service technicians receive all relevant information directly within the CAD system, reducing both repair time and the likelihood of errors.
+  
+  Traceability
+  Every service case is clearly documented and can be traced back to the affected assembly and the specific spare part involved.
+  
+  Feedback Loop
+  Insights gained during service operations are systematically fed back to the engineering department, enabling targeted product improvements.
+  
+  Regulatory Compliance
+  All relevant information on hazardous substances, recyclability, and part interchangeability is available digitally and supports compliance with           regulatory requirements.
+  
+  Automation
+  The integration of CAD and AAS enables largely automated provisioning and updating of service-related information.
 
 
