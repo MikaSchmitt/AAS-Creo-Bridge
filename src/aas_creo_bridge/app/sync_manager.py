@@ -6,8 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from aas_adapter import ConsumingApplication, get_models_from_aas, select_best_model, materialize_model_file
-from aas_creo_bridge.app.context import get_aasx_registry
+from aas_adapter import ConsumingApplication, get_global_asset_id, get_models_from_aas, select_best_model, \
+    materialize_model_file, RegistryAction
+from aas_creo_bridge.adapters.creo import import_model_into_creo, PartParameters, Parameter, set_part_parameters
+from aas_creo_bridge.app.context import get_aasx_registry, get_creoson_client
 
 if TYPE_CHECKING:
     from typing import List
@@ -17,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 @dataclass
 class ConnectionLink:
-    aas_shell_id: str
+    aas_shell_id: str | None = None
     creo_model_name: str | None = None
 
 
@@ -40,50 +42,146 @@ class SynchronizationManager:
         self._file_format = None
         self._application = [ConsumingApplication("Creo Parametric", "12", "CREO12"),
                              ConsumingApplication("STEP", "AP242", "STEP-242")]
-        self._links: dict[str, ConnectionLink] = {}
+        self._links_by_aas_id: dict[str, ConnectionLink] = {}
+        self._links_by_creo_model: dict[str, ConnectionLink] = {}
         self.out_dir = Path(tempfile.mkdtemp(prefix="aas_creo_bridge_"))
 
-    def link(self, aas_shell_id: str, creo_model_name: str | None) -> None:
-        self._links[aas_shell_id] = ConnectionLink(aas_shell_id, creo_model_name)
+        get_aasx_registry().add_listener(self._on_registry_changed)
 
-    def unlink(self, aas_shell_id: str) -> None:
-        del self._links[aas_shell_id]
+    @staticmethod
+    def _normalize_creo_model_name(creo_model_name: str | None) -> str | None:
+        if creo_model_name is None:
+            return None
+        return creo_model_name.lower()
+
+    def link(self, aas_shell_id: str | None, creo_model_name: str | None) -> None:
+        normalized_model_name = self._normalize_creo_model_name(creo_model_name)
+
+        if aas_shell_id:
+            link = self._links_by_aas_id.get(aas_shell_id, None)
+            if link and link.creo_model_name == normalized_model_name:
+                return
+            elif link and link.creo_model_name and link.creo_model_name != normalized_model_name:
+                raise RuntimeError(f"AAS shell {aas_shell_id} is already linked to a different Creo model")
+
+        if normalized_model_name:
+            link = self._links_by_creo_model.get(normalized_model_name)
+            if link and link.aas_shell_id == aas_shell_id:
+                return
+            elif link and link.aas_shell_id and link.aas_shell_id != aas_shell_id:
+                raise RuntimeError(f"Creo model {normalized_model_name} is already linked to a different AAS shell")
+
+        if aas_shell_id:
+            self._links_by_aas_id[aas_shell_id] = ConnectionLink(aas_shell_id, normalized_model_name)
+
+        if normalized_model_name:
+            self._links_by_creo_model[normalized_model_name] = ConnectionLink(aas_shell_id, normalized_model_name)
+
+    def unlink(self, key: str) -> None:
+        if key in self._links_by_aas_id:
+            conn = self._links_by_aas_id.pop(key)
+            if conn.creo_model_name:
+                self._links_by_creo_model.pop(conn.creo_model_name)
+            return
+
+        normalized_key = self._normalize_creo_model_name(key)
+        if normalized_key in self._links_by_creo_model:
+            conn = self._links_by_creo_model.pop(normalized_key)
+            if conn.aas_shell_id:
+                self._links_by_aas_id.pop(conn.aas_shell_id)
+            return
 
     def unlink_all(self) -> None:
-        self._links.clear()
+        self._links_by_aas_id.clear()
+        self._links_by_creo_model.clear()
 
     def list_links(self) -> List[ConnectionLink]:
-        return list(self._links.values())
+        return list(self._links_by_aas_id.values())
 
-    def sync_aas_to_creo(self, aas_shell_id: str) -> None:
-        aasx = get_aasx_registry().get(aas_shell_id)
+    def get_link_by_aas_id(self, aas_shell_id: str) -> ConnectionLink | None:
+        return self._links_by_aas_id.get(aas_shell_id)
+
+    def get_link_by_creo_model(self, creo_model_name: str) -> ConnectionLink | None:
+        normalized_model_name = self._normalize_creo_model_name(creo_model_name)
+        if normalized_model_name is None:
+            return None
+        return self._links_by_creo_model.get(normalized_model_name)
+
+    def sync_aas_to_creo(self, aas_id: str) -> None:
+        aasx = get_aasx_registry().get(aas_id)
         if aasx is None:
-            _logger.error("No AASX registry entry found for AAS shell %s", aas_shell_id)
+            _logger.error("No AASX registry entry found for AAS shell %s", aas_id)
             return None
 
         try:
-            models = get_models_from_aas(aasx, aas_shell_id)
+            models = get_models_from_aas(aasx, aas_id)
             best = select_best_model(models, self._application, self._file_format)
 
             if best is None:
-                _logger.warning("No suitable model found for AAS shell %s", aas_shell_id)
+                _logger.warning("No suitable model found for AAS shell %s", aas_id)
                 return None
 
             prepared = materialize_model_file(aasx, best, self.out_dir)
             if prepared is None:
-                _logger.warning("Model materialization returned no result for AAS shell %s", aas_shell_id)
+                _logger.warning("Model materialization returned no result for AAS shell %s", aas_id)
                 return None
 
             _logger.info("Prepared model extracted to %s", prepared.extracted_path)
         except ValueError as exc:
             _logger.error(
                 "Failed to synchronize AAS shell %s to Creo due to invalid AAS data: %s",
-                aas_shell_id,
+                aas_id,
                 exc,
             )
-            _logger.debug("Exception while syncing AAS shell %s", aas_shell_id, exc_info=True)
+            _logger.debug("Exception while syncing AAS shell %s", aas_id, exc_info=True)
             return None
 
+        client = get_creoson_client()
+        if client is None:
+            _logger.error(
+                "Failed to synchronize AAS shell %s to Creo: Creoson client is not available",
+                aas_id,
+            )
+            return None
+        model_name = import_model_into_creo(client, prepared.extracted_path)
 
-# Backwards-compatible name expected by app.context.init_sync_manager()
-SyncManager = SynchronizationManager
+        # aas_id is the unique identifier for the AAS instance
+        global_asset_id = get_global_asset_id(aasx, aas_id)  # unique identifier for the AAS type
+
+        part_with_params = PartParameters(
+            model_name,
+            [
+                Parameter(
+                    "AAS_ID",
+                    "string",
+                    aas_id
+                ),
+                Parameter(
+                    "GLOBAL_ASSET_ID",
+                    "string",
+                    global_asset_id
+                ),
+            ]
+        )
+
+        try:
+            set_part_parameters(client, part_with_params)
+        except Exception as exc:
+            _logger.error(
+                "Failed to set parameters for model %s: %s",
+                model_name,
+                exc,
+            )
+            _logger.debug("Exception while setting parameters", exc_info=True)
+
+        self.link(aas_id, model_name)
+
+        return None
+
+    def _on_registry_changed(self, action: str, shells: list[str]):
+        if action == RegistryAction.add:
+            for shell in shells:
+                self.link(shell, None)
+        elif action == RegistryAction.remove:
+            for shell in shells:
+                self.unlink(shell)

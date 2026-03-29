@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Any
 
-from aas_creo_bridge.app.context import get_aasx_registry, get_sync_manager
+from aas_creo_bridge.adapters.creo import SessionChangeAction, CreoSessionFile
+from aas_creo_bridge.app.context import get_aasx_registry, get_sync_manager, get_creo_session_tracker
 
 
 class ConnectionsView(tk.Frame):
@@ -52,12 +54,14 @@ class ConnectionsView(tk.Frame):
 
         self.aas_list = tk.Listbox(aas_panel, activestyle="dotbox")
         self.aas_list.grid(row=0, column=0, sticky="nsew")
+        self.aas_list.bind("<<ListboxSelect>>", lambda _: self._on_aas_list_select)
 
         self._aas_tree = ttk.Treeview(aas_panel, columns=("type",), show="tree headings", selectmode="browse")
         self._aas_tree.heading("#0", text="Element")
         self._aas_tree.heading("type", text="Type")
         self._aas_tree.column("#0", width=280, stretch=True)
         self._aas_tree.column("type", width=120, stretch=False)
+        self._aas_tree.bind("<<TreeviewSelect>>", lambda _: self._on_aas_tree_select)
 
         # Right: Creo panel
         creo_panel = ttk.Labelframe(body, text="Creo session parts", padding=8)
@@ -68,12 +72,14 @@ class ConnectionsView(tk.Frame):
 
         self.creo_list = tk.Listbox(creo_panel, activestyle="dotbox")
         self.creo_list.grid(row=0, column=0, sticky="nsew")
+        self.creo_list.bind("<<ListboxSelect>>", self._on_creo_list_select)
 
         self._creo_tree = ttk.Treeview(creo_panel, columns=("kind",), show="tree headings", selectmode="browse")
         self._creo_tree.heading("#0", text="Model")
         self._creo_tree.heading("kind", text="Kind")
         self._creo_tree.column("#0", width=280, stretch=True)
         self._creo_tree.column("kind", width=120, stretch=False)
+        self._creo_tree.bind("<<TreeviewSelect>>", lambda _: self._on_creo_tree_select)
 
         # Middle: action buttons
         actions = ttk.Frame(body)
@@ -90,7 +96,7 @@ class ConnectionsView(tk.Frame):
             actions_inner,
             text="➡",
             command=self._sync_aas_to_creo,
-            width = 3
+            width=3
         )
         self.btn_sync_aas_to_creo.pack(fill="none", pady=(0, 8))
 
@@ -108,8 +114,12 @@ class ConnectionsView(tk.Frame):
 
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
+        get_creo_session_tracker().add_listener(self._on_creo_session_changed)
 
-    def _on_registry_changed(self) -> None:
+        tracker = get_creo_session_tracker()
+        self.set_creo_parts([file for file in tracker.state.files])
+
+    def _on_registry_changed(self, action: str, shells: list[str]) -> None:
         # Use all currently loaded shells from registry
         registry = get_aasx_registry()
         all_shells = []
@@ -117,6 +127,18 @@ class ConnectionsView(tk.Frame):
             all_shells.extend(res.shells)
 
         self.set_aas_items(all_shells)
+
+    def _on_creo_session_changed(self, action: SessionChangeAction, parts: list[CreoSessionFile]) -> None:
+        if action == SessionChangeAction.add:
+            pass
+        if action == SessionChangeAction.remove:
+            pass
+        if action == SessionChangeAction.active:
+            return
+        if action == SessionChangeAction.revision:
+            return
+        tracker = get_creo_session_tracker()
+        self.set_creo_parts([file for file in tracker.state.files])
 
     # ---- Public hooks for later wiring ----
     def set_aas_items(self, items: list[str]) -> None:
@@ -170,13 +192,24 @@ class ConnectionsView(tk.Frame):
 
     def _sync_aas_to_creo(self) -> None:
 
-        if self._view_mode == "hier":
+        selection: Any = None
+
+        if self._view_mode.get() == "hier":
             return
         else:
-            selection = self.aas_list.selection_get()
+            try:
+                selection = self.aas_list.selection_get()
+            except tk.TclError:
+                pass
+            try:
+                selection = self.creo_list.selection_get()
+            except tk.TclError:
+                pass
+            if not selection:
+                return
 
-        sync_manager = get_sync_manager()
-        sync_manager.sync_aas_to_creo(selection)
+            sync_manager = get_sync_manager()
+            sync_manager.sync_aas_to_creo(selection)
 
         # TODO: push from AAS to Creo (and create model if missing)
         pass
@@ -188,3 +221,27 @@ class ConnectionsView(tk.Frame):
     def _break_connection(self) -> None:
         # TODO: remove link between selected AAS item and Creo model
         pass
+
+    def _on_aas_list_select(self, event: tk.Event) -> None:
+        selection = self.aas_list.selection_get()
+        sync_manager = get_sync_manager()
+        link = sync_manager.get_link_by_aas_id(selection)
+        self.creo_list.select_set(link.creo_model_name, link.creo_model_name)
+
+    def _on_creo_list_select(self, event: tk.Event) -> None:
+        selection = self.creo_list.selection_get()
+        sync_manager = get_sync_manager()
+        link = sync_manager.get_link_by_aas_id(selection)
+        self.aas_list.select_set(link.aas_shell_id, link.aas_shell_id)
+
+    def _on_aas_tree_select(self, event: tk.Event) -> None:
+        selection = self._aas_tree.selection_get()
+        sync_manager = get_sync_manager()
+        link = sync_manager.get_link_by_aas_id(selection)
+        self._creo_tree.selection_set(link.creo_model_name, link.creo_model_name)
+
+    def _on_creo_tree_select(self, event: tk.Event) -> None:
+        selection = self._creo_tree.selection_get()
+        sync_manager = get_sync_manager()
+        link = sync_manager.get_link_by_aas_id(selection)
+        self._aas_tree.selection_set(link.aas_shell_id, link.aas_shell_id)

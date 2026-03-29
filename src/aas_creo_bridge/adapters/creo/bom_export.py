@@ -125,18 +125,18 @@ def _build_entity_tree(bom_res: dict[str, Any], *, get_transforms: bool) -> Creo
 
 
 def get_assembly_data(
-    client: creopyson.Client,
-    file_: str | None = None,
-    *,
-    paths: bool = True,
-    skeletons: bool = False,
-    top_level: bool = False,
-    get_transforms: bool = False,
-    exclude_inactive: bool = False,
-    get_simpreps: bool = False,
-    include_parameters: bool = False,
-    include_mass_props: bool = False,
-    include_bounding_box: bool = False,
+        client: creopyson.Client,
+        file_: str | None = None,
+        *,
+        paths: bool = True,
+        skeletons: bool = False,
+        top_level: bool = False,
+        get_transforms: bool = False,
+        exclude_inactive: bool = False,
+        get_simpreps: bool = False,
+        include_parameters: bool = False,
+        include_mass_props: bool = False,
+        include_bounding_box: bool = False,
 ) -> CreoBom:
     """
     Fetch an assembly BOM and return it as a structured entity tree with index.
@@ -171,13 +171,19 @@ def get_assembly_data(
 
 
 def _enrich_entities(
-    client: creopyson.Client,
-    bom: CreoBom,
-    *,
-    include_parameters: bool,
-    include_mass_props: bool,
-    include_bounding_box: bool,
+        client: creopyson.Client,
+        bom: CreoBom,
+        *,
+        include_parameters: bool,
+        include_mass_props: bool,
+        include_bounding_box: bool,
 ) -> None:
+    def _bbox_value(bbox: dict[str, Any], *keys: str) -> float:
+        for key in keys:
+            if key in bbox and bbox[key] is not None:
+                return float(bbox[key])
+        return 0.0
+
     parameter_cache: dict[str, list[Parameter]] = {}
     mass_cache: dict[str, dict[str, Any]] = {}
     bbox_cache: dict[str, dict[str, Any]] = {}
@@ -193,8 +199,13 @@ def _enrich_entities(
                     raw_params = client.parameter_list(file_=file_name)
                     parameter_cache[file_name] = _to_parameters(raw_params)
                 except Exception as exc:
-                    _logger.error("Creoson API error for '%s': %r", file_name, exc, exc_info=True)
-                    raise RuntimeError(f"Creoson API error for '{file_name}'") from exc
+                    _logger.warning(
+                        "Creoson API error for parameters '%s': %r",
+                        file_name,
+                        exc,
+                        exc_info=True,
+                    )
+                    parameter_cache[file_name] = []
             entity.parameters = list(parameter_cache[file_name])
 
         if include_mass_props:
@@ -202,8 +213,13 @@ def _enrich_entities(
                 try:
                     mass_cache[file_name] = client.file_massprops(file_=file_name) or {}
                 except Exception as exc:
-                    _logger.error("Creoson API error for '%s': %r", file_name, exc, exc_info=True)
-                    raise RuntimeError(f"Creoson API error for '{file_name}'") from exc
+                    _logger.warning(
+                        "Creoson API error for mass properties '%s': %r",
+                        file_name,
+                        exc,
+                        exc_info=True,
+                    )
+                    mass_cache[file_name] = {}
             mass_props = mass_cache[file_name]
             entity.mass = float(mass_props.get("mass") or 0.0)
             entity.volume = float(mass_props.get("volume") or 0.0)
@@ -213,13 +229,24 @@ def _enrich_entities(
                 try:
                     bbox_cache[file_name] = client.geometry_bound_box(file_=file_name) or {}
                 except Exception as exc:
-                    _logger.error("Creoson API error for '%s': %r", file_name, exc, exc_info=True)
-                    raise RuntimeError(f"Creoson API error for '{file_name}'") from exc
+                    _logger.warning(
+                        "Creoson API error for bounding box '%s': %r",
+                        file_name,
+                        exc,
+                        exc_info=True,
+                    )
+                    bbox_cache[file_name] = {}
             bbox = bbox_cache[file_name]
             try:
-                entity.length = float(bbox.get("max_x", 0.0)) - float(bbox.get("min_x", 0.0))
-                entity.width = float(bbox.get("max_y", 0.0)) - float(bbox.get("min_y", 0.0))
-                entity.height = float(bbox.get("max_z", 0.0)) - float(bbox.get("min_z", 0.0))
+                max_x = _bbox_value(bbox, "max_x", "xmax")
+                min_x = _bbox_value(bbox, "min_x", "xmin")
+                max_y = _bbox_value(bbox, "max_y", "ymax")
+                min_y = _bbox_value(bbox, "min_y", "ymin")
+                max_z = _bbox_value(bbox, "max_z", "zmax")
+                min_z = _bbox_value(bbox, "min_z", "zmin")
+                entity.length = max_x - min_x
+                entity.width = max_y - min_y
+                entity.height = max_z - min_z
             except Exception:
                 _logger.warning("Invalid bounding box data for '%s': %s", file_name, bbox)
 

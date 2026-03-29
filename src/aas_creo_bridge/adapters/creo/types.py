@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any, Optional, List
 
 
@@ -67,3 +68,35 @@ class CreoBom:
     def get(self, path: str) -> Optional[CreoEntity]:
         """Get an entity by seq_path using the index."""
         return self.index.get(path)
+
+
+@dataclass(frozen=True)
+class CreoSessionFile:
+    file_name: str
+    revision: int
+
+
+@dataclass(frozen=True)
+class CreoSessionState:
+    files: dict[str, CreoSessionFile] = field(default_factory=dict)
+    active_file_name: Optional[str] = None
+    captured_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+
+@dataclass(frozen=True)
+class CreoSessionDelta:
+    added: tuple[CreoSessionFile, ...] = ()
+    removed: tuple[CreoSessionFile, ...] = ()
+    revision_changed: tuple[CreoSessionFile, ...] = ()
+    active_file_changed: bool = False
+    previous_active_file_name: Optional[str] = None
+    current_active_file_name: Optional[str] = None
+
+    @property
+    def has_changes(self) -> bool:
+        return bool(
+            self.added
+            or self.removed
+            or self.revision_changed
+            or self.active_file_changed
+        )
