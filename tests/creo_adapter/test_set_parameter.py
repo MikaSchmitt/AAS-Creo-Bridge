@@ -10,7 +10,7 @@ from aas_creo_bridge.adapters.creo.set_parameter import set_part_parameters
 from aas_creo_bridge.adapters.creo.types import Parameter, PartParameters
 
 CREOSON_DIR = Path(__file__).resolve().parents[2] / "creoson"
-ASM_PATH = Path(__file__).resolve().parents[2] / "fixtures/creo_test_asm/suction_gripper.asm.1"
+ASM_PATH = Path(__file__).resolve().parents[2] / "tests/fixtures/creo_test_asm/suction_gripper.asm.1"
 
 
 @pytest.fixture(scope="module")

@@ -135,7 +135,11 @@ class TestSynchronizationManager(unittest.TestCase):
         materialize_model_file_mock.return_value = prepared
         get_creoson_client_mock.return_value = creoson_client
 
-        manager.sync_aas_to_creo("aas_456")
+        with patch("aas_creo_bridge.app.sync_manager.get_global_asset_id", return_value="asset-xyz"), \
+                patch("aas_creo_bridge.app.sync_manager.set_part_parameters") as set_part_parameters_mock:
+            manager.sync_aas_to_creo("aas_456")
+
+        set_part_parameters_mock.assert_called_once()
 
         registry.get.assert_called_once_with("aas_456")
         get_models_from_aas_mock.assert_called_once_with(aasx_obj, "aas_456")
