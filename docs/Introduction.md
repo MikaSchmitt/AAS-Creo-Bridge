@@ -6,7 +6,7 @@ In the Mechatronics degree program at Karlsruhe University of Applied Sciences (
 ## Topic
 The aim of this project is to integrate CAD data into a digital twin. To represent this digital twin in a structured and standardized manner, the Asset Administration Shell (AAS) is utilized. It serves as a “container” for various documents associated with CAD data. The AAS is set up and managed with the AASX Package Explorer. 
 
-The objective is to implement an exemplary import and export process between CAD data (e.g., asset IDs, BOM structures) and corresponding AASX structures. User interaction is intended to take place through a graphical user interface (GUI). 
+The objective is to implement an exemplary import and export process between CAD data (e.g., asset IDs, BOM structures) and corresponding AAS structures. User interaction is intended to take place through a graphical user interface (GUI). 
 
 
 ##  Software Utilized
