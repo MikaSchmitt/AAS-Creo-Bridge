@@ -24,7 +24,7 @@ At the beginning of this project, several functional areas of a hypothetical ind
 #### 1. Scenario and User Role
 Robert Redford is a design engineer at an actuator manufacturer. He is responsible for developing a new vacuum gripper. During the development phase, he must ensure that all relevant requirements from the Machinery Directive, applicable safety standards, and documentation requirements are fulfilled. These requirements are digitally stored as properties and documents within the gripper’s AAS. 
 
-Robert is looking for a suitable vacuum generator (e.g., suction module) for the new gripper.
+Robert is looking for a suitable vacuum generator (e.g., suction module) for a new gripper.
 
 
 #### 2. Workflow
