@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import json
 import tkinter as tk
-from tkinter import ttk
-from typing import Any
+from dataclasses import asdict
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
 from aas_creo_bridge.adapters.creo import SessionChangeAction, CreoSessionFile
-from aas_creo_bridge.app.context import get_aasx_registry, get_sync_manager, get_creo_session_tracker
+from aas_creo_bridge.adapters.creo.bom_export import get_assembly_data
+from aas_creo_bridge.app.context import (
+    get_aasx_registry,
+    get_creo_session_tracker,
+    get_creoson_client,
+    get_logger,
+    get_sync_manager,
+)
 
 
 class ConnectionsView(tk.Frame):
@@ -19,22 +28,12 @@ class ConnectionsView(tk.Frame):
         hint = tk.Label(self, text="Link AAS items to Creo models and synchronize them.", fg="gray")
         hint.pack(anchor="w", pady=(6, 10))
 
-        # --- Top: view mode switch (List vs Hierarchical) ---
+        # --- Top bar ---
         top_bar = ttk.Frame(self)
         top_bar.pack(fill="x", pady=(0, 10))
 
-        ttk.Label(top_bar, text="View:").pack(side="left")
-
-        self._view_mode = tk.StringVar(value="list")  # "list" | "hier"
-        self.view_mode_list = ttk.Radiobutton(
-            top_bar, text="List view", value="list", variable=self._view_mode, command=self._apply_view_mode
-        )
-        self.view_mode_list.pack(side="left", padx=(8, 0))
-
-        self.view_mode_hier = ttk.Radiobutton(
-            top_bar, text="Hierarchical view", value="hier", variable=self._view_mode, command=self._apply_view_mode
-        )
-        self.view_mode_hier.pack(side="left", padx=(10, 0))
+        self.btn_export_bom = ttk.Button(top_bar, text="Export BOM from Creo", command=self._export_bom)
+        self.btn_export_bom.pack(side="left")
 
         # --- Main: 3 columns (AAS | actions | Creo parts) ---
         body = ttk.Frame(self)
@@ -56,13 +55,6 @@ class ConnectionsView(tk.Frame):
         self.aas_list.grid(row=0, column=0, sticky="nsew")
         self.aas_list.bind("<<ListboxSelect>>", lambda _: self._on_aas_list_select)
 
-        self._aas_tree = ttk.Treeview(aas_panel, columns=("type",), show="tree headings", selectmode="browse")
-        self._aas_tree.heading("#0", text="Element")
-        self._aas_tree.heading("type", text="Type")
-        self._aas_tree.column("#0", width=280, stretch=True)
-        self._aas_tree.column("type", width=120, stretch=False)
-        self._aas_tree.bind("<<TreeviewSelect>>", lambda _: self._on_aas_tree_select)
-
         # Right: Creo panel
         creo_panel = ttk.Labelframe(body, text="Creo session parts", padding=8)
         creo_panel.grid(row=0, column=2, sticky="nsew", padx=(8, 0))
@@ -73,13 +65,6 @@ class ConnectionsView(tk.Frame):
         self.creo_list = tk.Listbox(creo_panel, activestyle="dotbox")
         self.creo_list.grid(row=0, column=0, sticky="nsew")
         self.creo_list.bind("<<ListboxSelect>>", self._on_creo_list_select)
-
-        self._creo_tree = ttk.Treeview(creo_panel, columns=("kind",), show="tree headings", selectmode="browse")
-        self._creo_tree.heading("#0", text="Model")
-        self._creo_tree.heading("kind", text="Kind")
-        self._creo_tree.column("#0", width=280, stretch=True)
-        self._creo_tree.column("kind", width=120, stretch=False)
-        self._creo_tree.bind("<<TreeviewSelect>>", lambda _: self._on_creo_tree_select)
 
         # Middle: action buttons
         actions = ttk.Frame(body)
@@ -108,8 +93,7 @@ class ConnectionsView(tk.Frame):
         self.btn_break = ttk.Button(actions_inner, text="❌", command=self._break_connection, width=3)
         self.btn_break.pack(fill="none")
 
-        # Initial mode + placeholder content
-        self._apply_view_mode()
+        # Initial placeholder content
         self._load_placeholders()
 
         # Subscribe to AASX registry changes to update views
@@ -153,37 +137,9 @@ class ConnectionsView(tk.Frame):
         for p in parts:
             self.creo_list.insert(tk.END, p)
 
-    # ---- View mode ----
-    def _apply_view_mode(self) -> None:
-        mode = self._view_mode.get()
-
-        if mode == "hier":
-            self.aas_list.grid_remove()
-            self.creo_list.grid_remove()
-            self._aas_tree.grid(row=0, column=0, sticky="nsew")
-            self._creo_tree.grid(row=0, column=0, sticky="nsew")
-        else:
-            self._aas_tree.grid_remove()
-            self._creo_tree.grid_remove()
-            self.aas_list.grid(row=0, column=0, sticky="nsew")
-            self.creo_list.grid(row=0, column=0, sticky="nsew")
-
     def _load_placeholders(self) -> None:
-        # List placeholders
         self.set_aas_items(["[No AAS loaded]"])
         self.set_creo_parts(["[No Creo session]"])
-
-        # Tree placeholders
-        for item in self._aas_tree.get_children(""):
-            self._aas_tree.delete(item)
-        for item in self._creo_tree.get_children(""):
-            self._creo_tree.delete(item)
-
-        aas_root = self._aas_tree.insert("", "end", text="AAS", values=("—",), open=True)
-        self._aas_tree.insert(aas_root, "end", text="Submodels", values=("—",))
-
-        creo_root = self._creo_tree.insert("", "end", text="Creo Session", values=("—",), open=True)
-        self._creo_tree.insert(creo_root, "end", text="Parts", values=("—",))
 
     # ---- Actions (placeholders for now) ----
     def _assert_equal(self) -> None:
@@ -191,25 +147,21 @@ class ConnectionsView(tk.Frame):
         pass
 
     def _sync_aas_to_creo(self) -> None:
+        selection = None
 
-        selection: Any = None
-
-        if self._view_mode.get() == "hier":
+        try:
+            selection = self.aas_list.selection_get()
+        except tk.TclError:
+            pass
+        try:
+            selection = self.creo_list.selection_get()
+        except tk.TclError:
+            pass
+        if not selection:
             return
-        else:
-            try:
-                selection = self.aas_list.selection_get()
-            except tk.TclError:
-                pass
-            try:
-                selection = self.creo_list.selection_get()
-            except tk.TclError:
-                pass
-            if not selection:
-                return
 
-            sync_manager = get_sync_manager()
-            sync_manager.sync_aas_to_creo(selection)
+        sync_manager = get_sync_manager()
+        sync_manager.sync_aas_to_creo(selection)
 
         # TODO: push from AAS to Creo (and create model if missing)
         pass
@@ -222,6 +174,44 @@ class ConnectionsView(tk.Frame):
         # TODO: remove link between selected AAS item and Creo model
         pass
 
+    def _export_bom(self) -> None:
+        tracker = get_creo_session_tracker()
+        active_file_name = tracker.state.active_file_name
+        if not active_file_name:
+            messagebox.showinfo("Export BOM", "No active Creo model found.")
+            return
+
+        client = get_creoson_client()
+        if client is None:
+            messagebox.showerror("Export BOM", "Creoson client is unavailable.")
+            return
+
+        default_name = f"{Path(active_file_name).stem}_bom.json"
+        export_path = filedialog.asksaveasfilename(
+            title="Export BOM as JSON",
+            defaultextension=".json",
+            initialfile=default_name,
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+        )
+        if not export_path:
+            return
+
+        try:
+            bom = get_assembly_data(
+                client,
+                file_=active_file_name,
+                get_transforms=True,
+                include_parameters=True,
+                include_mass_props=True,
+                include_bounding_box=True,
+            )
+            with open(export_path, "w", encoding="utf-8") as out_file:
+                json.dump(asdict(bom), out_file, indent=2, ensure_ascii=True)
+            messagebox.showinfo("Export BOM", f"BOM exported to:\n{export_path}")
+        except Exception as exc:
+            get_logger(__name__).error("BOM export failed for '%s': %r", active_file_name, exc, exc_info=True)
+            messagebox.showerror("Export BOM", f"Failed to export BOM:\n{exc}")
+
     def _on_aas_list_select(self, event: tk.Event) -> None:
         selection = self.aas_list.selection_get()
         sync_manager = get_sync_manager()
@@ -233,15 +223,3 @@ class ConnectionsView(tk.Frame):
         sync_manager = get_sync_manager()
         link = sync_manager.get_link_by_aas_id(selection)
         self.aas_list.select_set(link.aas_shell_id, link.aas_shell_id)
-
-    def _on_aas_tree_select(self, event: tk.Event) -> None:
-        selection = self._aas_tree.selection_get()
-        sync_manager = get_sync_manager()
-        link = sync_manager.get_link_by_aas_id(selection)
-        self._creo_tree.selection_set(link.creo_model_name, link.creo_model_name)
-
-    def _on_creo_tree_select(self, event: tk.Event) -> None:
-        selection = self._creo_tree.selection_get()
-        sync_manager = get_sync_manager()
-        link = sync_manager.get_link_by_aas_id(selection)
-        self._aas_tree.selection_set(link.aas_shell_id, link.aas_shell_id)
