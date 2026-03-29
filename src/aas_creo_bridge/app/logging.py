@@ -5,7 +5,7 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
-from typing import Callable, TYPE_CHECKING
+from typing import Callable
 
 
 class LogLevel(StrEnum):
@@ -96,11 +96,24 @@ class AppLogHandler(logging.Handler):
         self._log_store.add(message, level=level, exc_info=exc_info)
 
 
+# src/aas_creo_bridge/app/logging.py
 def setup_logging(log_store: LogStore) -> None:
     """
-    Configures the standard logging library to use our LogStore.
+    Configure stdlib logging so LogStore receives app + external library logs
+    (e.g. aas_adapter, basyx).
     """
     handler = AppLogHandler(log_store)
-    root_logger = logging.getLogger("aas_creo_bridge")
-    root_logger.addHandler(handler)
-    root_logger.setLevel(logging.DEBUG)
+
+    root_logger = logging.getLogger()  # root_logger = captures all propagating loggers
+
+    # Avoid duplicate records if setup_logging is called more than once.
+    if not any(isinstance(h, AppLogHandler) and getattr(h, "_log_store", None) is log_store
+               for h in root_logger.handlers):
+        root_logger.addHandler(handler)
+
+    root_logger.setLevel(logging.ERROR)
+
+    logging.getLogger("aas_creo_bridge").setLevel(logging.DEBUG)
+    logging.getLogger("aas_adapter").setLevel(logging.DEBUG)
+    logging.getLogger("basyx").setLevel(logging.DEBUG)
+    logging.getLogger("creopyson").setLevel(logging.INFO)  # Use INFO because DEBUG is too verbose

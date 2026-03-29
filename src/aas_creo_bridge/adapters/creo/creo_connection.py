@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import time
 from pathlib import Path
@@ -5,6 +6,8 @@ from typing import Union
 
 import creopyson
 from creopyson.exceptions import MissingKey
+
+_logger = logging.getLogger(__name__)
 
 
 def connect_to_creoson(
@@ -27,7 +30,7 @@ def connect_to_creoson(
         raise FileNotFoundError(f"Creoson executable not found at: {creoson_bat}")
 
     # 2. Launch the Creoson server process
-    print(f"Launching Creoson server from: {creoson_bat}")
+    _logger.info(f"Launching Creoson server from: {creoson_bat}")
     try:
         subprocess.Popen(
             [str(creoson_bat)],
@@ -42,9 +45,9 @@ def connect_to_creoson(
     client = creopyson.Client()
     for attempt in range(1, max_retries + 1):
         try:
-            print(f"Attempting to connect to Creoson ({attempt}/{max_retries})...")
+            _logger.info(f"Attempting to connect to Creoson ({attempt}/{max_retries})...")
             client.connect()
-            print("Successfully connected to Creoson.")
+            _logger.info("Successfully connected to Creoson.")
             return client
         except ConnectionError:
             if attempt < max_retries:
