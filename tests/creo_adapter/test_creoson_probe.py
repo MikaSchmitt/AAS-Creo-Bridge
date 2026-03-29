@@ -55,5 +55,3 @@ def test_probe_creoson_status_creo_not_connected(monkeypatch) -> None:
 
     assert result.creoson_running is True
     assert result.creo_connected is False
-
-

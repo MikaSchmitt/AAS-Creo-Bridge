@@ -114,6 +114,7 @@ class ConnectionsView(tk.Frame):
 
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
+        get_creo_session_tracker().add_listener(self._on_creo_session_changed)
 
         tracker = self._safe_get_tracker()
         if tracker is not None:
