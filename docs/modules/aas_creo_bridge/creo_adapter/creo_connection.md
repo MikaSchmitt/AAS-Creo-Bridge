@@ -33,12 +33,12 @@ which should not happen in normal flow.
 
 ## Error Handling
 
-| Scenario                                  | Behavior                 |
-|-------------------------------------------|--------------------------|
-| `creoson_run.bat` missing                 | Raises `FileNotFoundError` |
-| Server process fails to launch            | Raises `RuntimeError`    |
-| Connection fails after all retries        | Raises `RuntimeError`    |
-| Creoson connection error (`MissingKey`)   | Raises `RuntimeError`    |
+| Scenario                                | Behavior                   |
+|-----------------------------------------|----------------------------|
+| `creoson_run.bat` missing               | Raises `FileNotFoundError` |
+| Server process fails to launch          | Raises `RuntimeError`      |
+| Connection fails after all retries      | Raises `RuntimeError`      |
+| Creoson connection error (`MissingKey`) | Raises `RuntimeError`      |
 
 ## Testing
 

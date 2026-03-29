@@ -38,12 +38,12 @@ Parameters:
 
 ## Error Handling
 
-| Scenario                           | Behavior                 |
-|------------------------------------|--------------------------|
-| Missing file name                  | Raises `ValueError`      |
-| Missing parameter name             | Raises `ValueError`      |
-| Empty parameter list (batch mode)  | Raises `ValueError`      |
-| Creoson update fails               | Raises `RuntimeError`    |
+| Scenario                          | Behavior              |
+|-----------------------------------|-----------------------|
+| Missing file name                 | Raises `ValueError`   |
+| Missing parameter name            | Raises `ValueError`   |
+| Empty parameter list (batch mode) | Raises `ValueError`   |
+| Creoson update fails              | Raises `RuntimeError` |
 
 ## Testing
 

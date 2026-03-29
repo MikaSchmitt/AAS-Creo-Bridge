@@ -30,20 +30,20 @@ Returns:
 - Native formats (`.asm`, `.prt`) are opened directly with `file_open`.
   The revision suffix (for example `.asm.1`) is stripped before opening.
 - Exchange formats are imported via `interface_import_file`:
-  - STEP (`.stp`, `.step`)
-  - IGES (`.igs`, `.iges`) (not tested)
-  - NEUTRAL (`.neu`) (not tested)
-  - PV (`.pvz`, `.pvs`) (not tested)
+    - STEP (`.stp`, `.step`)
+    - IGES (`.igs`, `.iges`) (not tested)
+    - NEUTRAL (`.neu`) (not tested)
+    - PV (`.pvz`, `.pvs`) (not tested)
 - The imported model is opened and the opened file name is returned.
 
 ## Error Handling
 
-| Scenario                              | Behavior                 |
-|---------------------------------------|--------------------------|
-| Path does not exist                   | Raises `FileNotFoundError` |
-| Path is not absolute or not a file    | Raises `ValueError`      |
-| Unsupported extension                 | Raises `ValueError`      |
-| Creoson import/open failure           | Raises `RuntimeError`    |
+| Scenario                           | Behavior                   |
+|------------------------------------|----------------------------|
+| Path does not exist                | Raises `FileNotFoundError` |
+| Path is not absolute or not a file | Raises `ValueError`        |
+| Unsupported extension              | Raises `ValueError`        |
+| Creoson import/open failure        | Raises `RuntimeError`      |
 
 ## Testing
 

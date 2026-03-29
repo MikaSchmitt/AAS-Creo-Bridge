@@ -41,9 +41,17 @@ def connect_to_creoson(
         max_retries: int = 5,
         delay: int = 2,
 ) -> creopyson.Client | None:
+    """
+    Starts the Creoson server from the provided folder and connects with retry logic.
+
+    :raises FileNotFoundError: If the Creoson batch file does not exist.
+    :raises RuntimeError: If the server process cannot be launched or connection fails.
+    """
+    # 1. Define paths relative to the provided server folder
     server_folder_path = Path(server_folder)
     creoson_bat = server_folder_path / "creoson_run.bat"
 
+    # Verify the batch file exists before attempting to start
     if not creoson_bat.exists():
         raise FileNotFoundError(f"Creoson executable not found at: {creoson_bat}")
 
@@ -72,6 +80,7 @@ def connect_to_creoson(
     except Exception as e:
         raise RuntimeError(f"Failed to launch Creoson server process: {e}") from e
 
+    # 3. Establish connection with retry logic
     client = creopyson.Client()
     for attempt in range(1, max_retries + 1):
         status = proc.poll()

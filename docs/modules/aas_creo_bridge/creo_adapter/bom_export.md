@@ -61,12 +61,12 @@ file is included.
 
 ## Error Handling
 
-| Scenario                              | Behavior                                 |
-|---------------------------------------|------------------------------------------|
-| BOM request fails                     | Raises `RuntimeError`                    |
-| BOM response is not a dict            | Raises `RuntimeError`                    |
-| Parameter/mass/bbox API call fails    | Logs warning, uses empty defaults        |
-| Missing `seq_path` or `transform`     | Logs warning, generates fallback path    |
+| Scenario                           | Behavior                              |
+|------------------------------------|---------------------------------------|
+| BOM request fails                  | Raises `RuntimeError`                 |
+| BOM response is not a dict         | Raises `RuntimeError`                 |
+| Parameter/mass/bbox API call fails | Logs warning, uses empty defaults     |
+| Missing `seq_path` or `transform`  | Logs warning, generates fallback path |
 
 ## Testing
 
