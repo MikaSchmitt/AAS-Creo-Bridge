@@ -33,10 +33,10 @@ def test_import_model_into_creo_raises_for_missing_path(tmp_path: Path, creo_cli
 @pytest.mark.integration
 def test_import_model_into_creo_opens_native_asm(creo_client) -> None:
     clear_session(creo_client)
-    assert import_model_into_creo(creo_client, ASM_PATH) is None
+    assert import_model_into_creo(creo_client, ASM_PATH) == 'SUCTION_GRIPPER.asm'
 
 
 @pytest.mark.integration
 def test_import_model_into_creo_imports_step(creo_client) -> None:
     clear_session(creo_client)
-    assert import_model_into_creo(creo_client, STEP_PATH) is None
+    assert import_model_into_creo(creo_client, STEP_PATH) == 'GPLE60-3S.prt'

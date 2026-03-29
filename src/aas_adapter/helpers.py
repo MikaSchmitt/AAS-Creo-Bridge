@@ -25,7 +25,8 @@ from pathlib import Path
 from typing import Optional, TypeVar
 
 from basyx.aas import model
-from basyx.aas.model import base
+from basyx.aas.model import base, Submodel, SubmodelElementCollection, SubmodelElementList, \
+    AssetAdministrationShell, Property, File, DictObjectStore, SubmodelElement, MultiLanguageProperty
 
 from aas_adapter.models import FileFormat
 
@@ -84,16 +85,12 @@ def get_value(
 
     sme = element
 
-    # Prefer resolving nested elements by idShort when a key is provided.
-    # BaSyx containers implement UniqueIdShortNamespace, but test doubles may only
-    # provide a compatible get_referable() method.
     if key:
         if isinstance(element, model.UniqueIdShortNamespace) or hasattr(
                 element, "get_referable"
         ):
             sme = element.get_referable(key)
 
-    # Be defensive: some objects (e.g., collections) may not have a .value attribute.
     return getattr(sme, "value", None)
 
 
@@ -192,3 +189,27 @@ def mcad_doc_name_to_cadenas_format(doc_name: str) -> FileFormat | None:
             return FileFormat(fmt_name, fmt_version, fmt_qualifier)
 
     return None
+
+
+def get_sm(object_store: DictObjectStore, aas: AssetAdministrationShell) -> Iterable[Submodel]:
+    sm = []
+    for sm_ref in aas.submodel:
+        sm.append(sm_ref.resolve(object_store))
+    return sm
+
+
+def get_child_sme(element: Submodel | SubmodelElementCollection | SubmodelElementList) -> \
+        Iterable[SubmodelElementCollection | SubmodelElementList | Property | File | MultiLanguageProperty]:
+    match element:
+        case Submodel():
+            return list(element.submodel_element or [])
+        case SubmodelElement():
+            return list(element.value or [])
+
+
+def get_child_elements(object_store: DictObjectStore,
+                       element: AssetAdministrationShell | Submodel | SubmodelElementCollection | SubmodelElementList) -> \
+        Iterable[Submodel | SubmodelElementCollection | SubmodelElementList | Property | File | MultiLanguageProperty]:
+    if isinstance(element, AssetAdministrationShell):
+        return get_sm(object_store, element)
+    return get_child_sme(element)

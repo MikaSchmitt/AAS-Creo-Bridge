@@ -3,7 +3,11 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk
 
-from aas_creo_bridge.app.context import get_aasx_registry, get_logger
+from basyx.aas.model import AssetAdministrationShell, Property, MultiLanguageProperty, File
+
+from aas_adapter import check_expected_model, get_child_elements, get_value
+from aas_creo_bridge.adapters.creo import CreoSessionFile, SessionChangeAction
+from aas_creo_bridge.app.context import get_aasx_registry, get_logger, get_creo_session_tracker, get_sync_manager
 
 
 class ExplorerView(tk.Frame):
@@ -11,6 +15,7 @@ class ExplorerView(tk.Frame):
         super().__init__(parent)
 
         # --- Header ---
+        self._node_properties: dict[str, list[list[str]]] = {}
         title = tk.Label(self, text="Explorer", font=("Segoe UI", 16, "bold"))
         title.pack(anchor="w")
 
@@ -24,6 +29,7 @@ class ExplorerView(tk.Frame):
         tk.Label(top_bar, text="AAS:").pack(side="left")
 
         self._selected_aas = tk.StringVar(value="No AAS loaded")
+        self._follow_active_part = tk.BooleanVar(value=True)
         self.aas_selector = ttk.Combobox(
             top_bar,
             textvariable=self._selected_aas,
@@ -33,6 +39,13 @@ class ExplorerView(tk.Frame):
         )
         self.aas_selector.pack(side="left", padx=(8, 0), fill="x", expand=True)
         self.aas_selector.bind("<<ComboboxSelected>>", self._on_aas_selected)
+
+        self.follow_active_check = ttk.Checkbutton(
+            top_bar,
+            text="Follow active part in Creo",
+            variable=self._follow_active_part,
+        )
+        self.follow_active_check.pack(side="left", padx=(12, 0))
 
         # --- Main area: two side-by-side views (tree + details frame) ---
         main_pane = ttk.Panedwindow(self, orient="horizontal")
@@ -66,7 +79,7 @@ class ExplorerView(tk.Frame):
         header = ttk.Label(right, text="Details", font=("Segoe UI", 12, "bold"))
         header.pack(anchor="w")
 
-        self.details_container = ttk.Frame(right)
+        self.details_container = tk.Frame(right)
         self.details_container.pack(fill="both", expand=True, pady=(8, 0))
 
         self.details_placeholder = ttk.Label(
@@ -83,6 +96,9 @@ class ExplorerView(tk.Frame):
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
 
+        tracker = get_creo_session_tracker()
+        tracker.add_listener(self._on_creo_session_changed)
+
     def _on_registry_changed(self, action: str, shells: list[str]) -> None:
         # Use all currently loaded shells from registry
         registry = get_aasx_registry()
@@ -91,6 +107,29 @@ class ExplorerView(tk.Frame):
             all_shells.extend(res.shells)
 
         self.set_aas_options(all_shells)
+
+    def _on_creo_session_changed(self, action: SessionChangeAction, parts: list[CreoSessionFile]) -> None:
+        sync_manager = get_sync_manager()
+        match action:
+            case SessionChangeAction.add:
+                return
+            case SessionChangeAction.remove:
+                return
+            case SessionChangeAction.active:
+                if not self._follow_active_part.get() or not parts:
+                    return
+
+                link = sync_manager.get_link_by_creo_model(parts[0].file_name)
+                if not link:
+                    return
+
+                aas_id = link.aas_shell_id
+                if aas_id:
+                    self._selected_aas.set(aas_id)
+                    self._on_aas_selected()
+                return
+            case SessionChangeAction.revision:
+                return
 
     # ---- Hooks for a future AAS manager/controller ----
     def set_aas_options(self, names: list[str], *, select_first: bool = True) -> None:
@@ -140,7 +179,7 @@ class ExplorerView(tk.Frame):
 
         # For now, just reset the tree and show placeholder details.
         self._clear_tree()
-        self._load_placeholder_tree(aas_name=selected)
+        self._load_tree(aas_name=selected)
         self._show_details_text(f"Selected AAS: {selected}")
 
     def _on_tree_selection_changed(self, _event: object | None = None) -> None:
@@ -160,28 +199,83 @@ class ExplorerView(tk.Frame):
         if values:
             element_type = str(values[0])
 
-        self._show_details_text(f"Element: {label}\nType: {element_type}")
+        properties = self._node_properties.get(item_id, [])
+        properties_text = "\n".join(f" {item[0]}: {item[1]}" for item in properties)
+        if not properties_text:
+            properties_text = " (none)"
+
+        self._show_details_text(
+            f"Element: {label}\nType: {element_type}\nProperties:\n{properties_text}"
+        )
 
     # ---- Helpers ----
     def _show_details_text(self, text: str) -> None:
         for child in self.details_container.winfo_children():
             child.destroy()
 
-        lbl = ttk.Label(self.details_container, text=text, justify="left")
-        lbl.pack(anchor="w")
+        # Use a Text widget for selectable/copyable text
+        text_widget = tk.Text(
+            self.details_container,
+            height=10,
+            width=50,
+            wrap="word",
+            state="disabled",  # Read-only
+            bg=self.details_container.cget("bg"),
+            relief="flat",
+            bd=0,
+            font=("Segoe UI", 10)
+        )
+        text_widget.pack(anchor="w", fill="both", expand=True)
+
+        # Enable temporarily to insert text, then disable again
+        text_widget.config(state="normal")
+        text_widget.insert("1.0", text)
+        text_widget.config(state="disabled")
 
     def _clear_tree(self) -> None:
+        self._node_properties.clear()
         for item in self.aas_tree.get_children(""):
             self.aas_tree.delete(item)
 
-    def _load_placeholder_tree(self, aas_name: str = "") -> None:
-        root_label = aas_name or "AAS"
-        root = self.aas_tree.insert("", "end", text=root_label, values=("AssetAdministrationShell",), open=True)
+    def _build_tree(self, parent, object_store, element):
+        index = 0
+        for element in get_child_elements(object_store, element):
+            if isinstance(element, Property):
+                self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
+            elif isinstance(element, MultiLanguageProperty):
+                mlp = get_value(element)
+                if mlp:
+                    # get the en field or fallback to the first element if it doesn't exist
+                    value = mlp.get("en") or next(iter(mlp.values()), None)
+                    self._node_properties.setdefault(parent, []).append([element.id_short, str(value)])
+            elif isinstance(element, File):
+                self._node_properties.setdefault(parent, []).append([element.id_short, str(get_value(element))])
+                self._node_properties.setdefault(parent, []).append([element.id_short, str(element.content_type)])
+            else:
+                # if it's an element of a submodel element list use an index instead if id_short
+                if "generated_submodel_list" in element.id_short:
+                    id_short = f"[{index}]"
+                    index += 1
+                else:
+                    id_short = element.id_short
+                node = self.aas_tree.insert(parent, "end", text=id_short, values=(element.__class__.__name__,))
+                self._build_tree(node, object_store, element)
+        return
 
-        sm = self.aas_tree.insert(root, "end", text="Submodels", values=("Collection",), open=True)
-        sm1 = self.aas_tree.insert(sm, "end", text="Identification", values=("Submodel",), open=True)
-        self.aas_tree.insert(sm1, "end", text="SerialNumber", values=("Property",))
-        self.aas_tree.insert(sm1, "end", text="Manufacturer", values=("Property",))
+    def _load_tree(self, aas_name: str = ""):
+        if not aas_name:
+            return
+        self._clear_tree()
 
-        sm2 = self.aas_tree.insert(sm, "end", text="Documentation", values=("Submodel",), open=True)
-        self.aas_tree.insert(sm2, "end", text="Manual.pdf", values=("File",))
+        registry = get_aasx_registry()
+        aasx = registry.get(aas_name)
+        if not aasx:
+            return
+
+        aas = aasx.object_store.get_identifiable(aas_name)
+        check_expected_model(aas, AssetAdministrationShell)
+
+        root = self.aas_tree.insert("", "end", text=aas_name, values=("AssetAdministrationShell",), open=True)
+        value = aas.asset_information.global_asset_id
+        self._node_properties.setdefault(root, []).append(["Global Asset Id", str(value)])
+        self._build_tree(root, aasx.object_store, aas)
