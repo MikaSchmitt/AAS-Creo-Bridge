@@ -19,7 +19,7 @@ While Creo and PyCharm are proprietary software products, the AASX Package Explo
 At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two specific use cases: Engineering and After-Sales.
 
 
-### Engineering Phase
+### Engineering 
 
 #### 1. Scenario and User Role
 Robert Redford is a design engineer at an actuator manufacturer. He is responsible for developing a new vacuum gripper. During the development phase, he must ensure that all relevant requirements from the Machinery Directive, applicable safety standards, and documentation requirements are fulfilled. These requirements are digitally stored as properties and documents within the gripper’s AAS. 
@@ -52,7 +52,7 @@ All requirements from the Machinery Directive and applicable safety standards ar
 All technical, safety‑related, and sustainability‑related information is centrally managed within the AAS. This creates full transparency across the entire product lifecycle, from design and operation to maintenance, optimization, and spare parts management.
 
 
-### After‑Sales Phase 
+### After‑Sales 
 
 #### 1. Scenario and User Role
 Once the vacuum gripper is in operation, the after‑sales phase begins, including: maintenance, repair, and spare parts management. Paul Newman, a service technician at the same company, who supports customers in the field. When a malfunction is reported, such as a sudden loss of vacuum pressure, he uses the digital product data stored in the AAS to diagnose and resolve the issue efficiently. 
