@@ -32,7 +32,7 @@ class ConnectionsView(tk.Frame):
         top_bar = ttk.Frame(self)
         top_bar.pack(fill="x", pady=(0, 10))
 
-        self.btn_export_bom = ttk.Button(top_bar, text="Export BOM", command=self._export_bom)
+        self.btn_export_bom = ttk.Button(top_bar, text="Export BOM from Creo", command=self._export_bom)
         self.btn_export_bom.pack(side="left")
 
         # --- Main: 3 columns (AAS | actions | Creo parts) ---
