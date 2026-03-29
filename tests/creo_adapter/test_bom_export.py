@@ -26,10 +26,10 @@ def creo_client():
 def test_bom_export_writes_bom_to_file(creo_client) -> None:
     import_model_into_creo(creo_client, ASM_PATH)
     part = PartParameters(
-        file_name="ARM_TOP.PRT",
+        file_name="SUCTION_PLATE.PRT",
         parameters=[
-            Parameter(name="assetID", type="string", value="423828319"),
-            Parameter(name="OrderCodeofManufacturer", type="string", value="OCM-001"),
+            Parameter(name="assetID", type="string", value="fictitiousAssetID1234567"),
+            Parameter(name="OrderCodeofManufacturer", type="string", value="fictitiousCodeofManufacturer1234567"),
         ],
     )
     set_part_parameters(creo_client, part)
@@ -45,4 +45,7 @@ def test_bom_export_writes_bom_to_file(creo_client) -> None:
     )
 
     export_path = Path(__file__).resolve().parents[1] / "fixtures/bom_export.json"
-    assert json.dumps(asdict(bom), indent=2, ensure_ascii=True) == export_path.read_text(encoding="utf-8").strip()
+    actual_path = Path(__file__).resolve().parents[1] / "fixtures/bom_export.actual.json"
+    actual_json = json.dumps(asdict(bom), indent=2, ensure_ascii=True)
+    actual_path.write_text(actual_json, encoding="utf-8")
+    assert actual_json == export_path.read_text(encoding="utf-8").strip()
