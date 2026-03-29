@@ -101,7 +101,6 @@ class TestSynchronizationManager(unittest.TestCase):
         self.assertIsNone(manager.get_link_by_aas_id("aas_1"))
         self.assertIsNone(manager.get_link_by_creo_model("part_01"))
 
-    """
     @patch("aas_creo_bridge.app.sync_manager.materialize_model_file")
     @patch("aas_creo_bridge.app.sync_manager.select_best_model")
     @patch("aas_creo_bridge.app.sync_manager.get_models_from_aas")
@@ -155,7 +154,6 @@ class TestSynchronizationManager(unittest.TestCase):
             creoson_client,
             prepared.extracted_path,
         )
-    """
 
     @patch("aas_creo_bridge.app.sync_manager.materialize_model_file")
     @patch("aas_creo_bridge.app.sync_manager.select_best_model")
