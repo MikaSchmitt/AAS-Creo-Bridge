@@ -184,8 +184,8 @@ If callers need root-cause detail, inspect the chained exception and logs.
 
 ## Related Documentation
 
-- [`docs/modules/aas_adapter/extractor.md`](./extractor.md)
-- [`docs/modules/aas_adapter/registry.md`](./registry.md)
+- [`Extractor`](./extractor.md)
+- [`Registry`](./registry.md)
 - [BaSyx Python SDK](https://basyx-python-sdk.readthedocs.io/en/latest/index.html)
 - [ECMA-376-2 OPC](https://www.ecma-international.org/publications-and-standards/standards/ecma-376/)
 

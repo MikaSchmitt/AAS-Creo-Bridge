@@ -3,20 +3,22 @@
 AAS-Creo-Bridge Documentation
 =============================
 
-Welcome! This documentation is built with Sphinx.
-
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
-   :glob:
 
+   Introduction
    README
-   guides/*
-   architecture/*
-   modules/*/*
-   modules/*/*/*
+   guides/setup
+   architecture/overview
+   architecture/creo-bridge
+   modules/aas_adapter/index
+   modules/aas_creo_bridge/app/index
+   modules/aas_creo_bridge/gui/index
+   modules/aas_creo_bridge/creo_adapter/index
+..
+   guides/documentation
    api
-   api/*
 
 Indices and tables
 ==================
