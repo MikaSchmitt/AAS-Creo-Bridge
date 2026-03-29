@@ -83,7 +83,7 @@ class ExplorerView(tk.Frame):
         # Subscribe to AASX registry changes to update views
         get_aasx_registry().add_listener(self._on_registry_changed)
 
-    def _on_registry_changed(self) -> None:
+    def _on_registry_changed(self, action: str, shells: list[str]) -> None:
         # Use all currently loaded shells from registry
         registry = get_aasx_registry()
         all_shells = []

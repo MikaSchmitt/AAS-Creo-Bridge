@@ -125,18 +125,18 @@ def _build_entity_tree(bom_res: dict[str, Any], *, get_transforms: bool) -> Creo
 
 
 def get_assembly_data(
-    client: creopyson.Client,
-    file_: str | None = None,
-    *,
-    paths: bool = True,
-    skeletons: bool = False,
-    top_level: bool = False,
-    get_transforms: bool = False,
-    exclude_inactive: bool = False,
-    get_simpreps: bool = False,
-    include_parameters: bool = False,
-    include_mass_props: bool = False,
-    include_bounding_box: bool = False,
+        client: creopyson.Client,
+        file_: str | None = None,
+        *,
+        paths: bool = True,
+        skeletons: bool = False,
+        top_level: bool = False,
+        get_transforms: bool = False,
+        exclude_inactive: bool = False,
+        get_simpreps: bool = False,
+        include_parameters: bool = False,
+        include_mass_props: bool = False,
+        include_bounding_box: bool = False,
 ) -> CreoBom:
     """
     Fetch an assembly BOM and return it as a structured entity tree with index.
@@ -171,12 +171,12 @@ def get_assembly_data(
 
 
 def _enrich_entities(
-    client: creopyson.Client,
-    bom: CreoBom,
-    *,
-    include_parameters: bool,
-    include_mass_props: bool,
-    include_bounding_box: bool,
+        client: creopyson.Client,
+        bom: CreoBom,
+        *,
+        include_parameters: bool,
+        include_mass_props: bool,
+        include_bounding_box: bool,
 ) -> None:
     def _bbox_value(bbox: dict[str, Any], *keys: str) -> float:
         for key in keys:

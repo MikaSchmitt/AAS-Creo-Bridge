@@ -7,7 +7,7 @@ import creopyson
 _logger = logging.getLogger(__name__)
 
 
-def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
+def import_model_into_creo(client: creopyson.Client, path: Path) -> str:
     """
     Automatically detects the format from file extensions and
     safely opens or imports the model into Creo.
@@ -28,9 +28,9 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
         # --- 1. Native Creo Formats ---
         if "asm" in extensions or "prt" in extensions:
             name_wo_revision = re.sub(r"\.\d+$", "", path.name)
-            client.file_open(file_=name_wo_revision, dirname=str(path.parent), display=True)
+            response = client.file_open(file_=name_wo_revision, dirname=str(path.parent), display=True)
             _logger.info("Successfully opened native file: %s", path.name)
-            return
+            return response.get('files')[0]
 
         # --- 2. Non-native Formats (Interface Import) ---
         file_type = ""
@@ -54,8 +54,14 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> None:
             new_name=path.name,
             new_model_type="prt",
         )  # Use filename without extensions as model name
-        client.file_open(imported_model_name, display=True)
+        response = client.file_open(imported_model_name, display=True)
+
         _logger.info("Successfully imported and opened %s model: %s", file_type, imported_model_name)
+        return response.get('files')[0]
+
+    except RuntimeError as e:
+        _logger.error("Failed to import/open model '%s': %r", path.name, e, exc_info=True)
+        raise RuntimeError(f"Failed to import/open model '{path.name}'") from e
 
     except Exception as e:
         # Catching any Creoson or connection errors to prevent program crash

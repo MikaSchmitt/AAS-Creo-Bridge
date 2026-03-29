@@ -189,6 +189,28 @@ def _extract_file_versions(
     return metadata
 
 
+def get_global_asset_id(aasx: AASXImportResult, aas_id: str) -> str:
+    """
+    Return the ``globalAssetId`` for the Asset Administration Shell identified by *aas_id*.
+
+    The global asset ID is the type-level identifier that names the *asset* the shell
+    describes (as opposed to ``aas_id``, which identifies the shell instance itself).
+    It is stored on the shell's :class:`basyx.aas.model.AssetInformation` object.
+
+    :param aasx: The AASX import result containing the object store.
+    :type aasx: AASXImportResult
+    :param aas_id: The identifier of the AAS shell to look up.
+    :type aas_id: str
+    :return: The ``globalAssetId`` string.
+    :rtype: str
+    :raises KeyError: If *aas_id* cannot be resolved in the object store.
+    :raises TypeError: If the resolved object is not an :class:`~basyx.aas.model.AssetAdministrationShell`.
+    """
+    aas = aasx.object_store.get_identifiable(aas_id)
+    aas = check_expected_model(aas, AssetAdministrationShell)
+    return aas.asset_information.global_asset_id
+
+
 def get_models_from_aas(aasx: AASXImportResult, aas_id: str) -> list[FileData]:
     """
     Extract 3D models from an Asset Administration Shell within an AASX result.

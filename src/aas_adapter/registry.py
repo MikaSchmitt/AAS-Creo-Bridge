@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 from aas_adapter.importer import AASXImportResult
@@ -11,6 +12,8 @@ if typing.TYPE_CHECKING:
     from typing import Callable
 
 _logger = logging.getLogger(__name__)
+
+RegistryAction = Enum("RegistryAction", ["add", "remove"])
 
 
 @dataclass
@@ -40,7 +43,7 @@ class AASXRegistry:
         """
         self._by_path: dict[Path, AASXEntry] = {}
         self._by_id: dict[str, AASXEntry] = {}
-        self._listeners: list[Callable[[], None]] = []
+        self._listeners: list[Callable[[RegistryAction, list[str]], None]] = []
 
     def register(self, result: AASXImportResult) -> None:
         """
@@ -55,7 +58,7 @@ class AASXRegistry:
         self._by_path[result.path] = AASXEntry(result=result)
         for aas_id in result.shells:
             self._by_id[aas_id] = AASXEntry(result=result)  # TODO: handle duplicates
-        self._notify_listeners()
+        self._notify_listeners(RegistryAction.add, result.shells)
 
     def unregister(self, path: Path) -> None:
         """
@@ -67,8 +70,11 @@ class AASXRegistry:
         :type path: Path
         """
         if path in self._by_path:
+            shells = self._by_path[path].result.shells
             self._by_path.pop(path)
-            self._notify_listeners()
+            for aas_id in shells:
+                self._by_id.pop(aas_id)
+            self._notify_listeners(RegistryAction.remove, shells)
 
     def is_open(self, key: Path | str) -> bool:
         """
@@ -120,24 +126,25 @@ class AASXRegistry:
         """
         Clear all entries from the registry and notify listeners.
         """
+        shells = [shell for entry in self._by_path.values() for shell in entry.result.shells]
         self._by_path.clear()
         self._by_id.clear()
-        self._notify_listeners()
+        self._notify_listeners(RegistryAction.remove, shells)
 
-    def add_listener(self, listener: Callable[[], None]) -> None:
+    def add_listener(self, listener: Callable[[RegistryAction, list[str]], None]) -> None:
         """Register a callback to be notified when the registry changes."""
         self._listeners.append(listener)
 
-    def remove_listener(self, listener: Callable[[], None]) -> None:
+    def remove_listener(self, listener: Callable[[RegistryAction, list[str]], None]) -> None:
         """Unregister a previously registered listener."""
         if listener in self._listeners:
             self._listeners.remove(listener)
 
-    def _notify_listeners(self) -> None:
+    def _notify_listeners(self, action: str, aas_ids: list[str]) -> None:
         """Call all registered listeners."""
         for listener in self._listeners:
             try:
-                listener()
+                listener(action, aas_ids)
             except Exception as e:
                 _logger.error(
                     f"Error in AASXRegistry listener: {e}",
