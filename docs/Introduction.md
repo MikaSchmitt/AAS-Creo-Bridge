@@ -49,13 +49,13 @@ Component integration and BOM updates are performed automatically.
 All requirements from the Machinery Directive and applicable safety standards are digitally documented and can be verified at any time.
 
 ##### Lifecycle Transparency
-All technical, safety‑related, and sustainability‑related information is centrally managed within the AAS. This creates full transparency across the entire product lifecycle, from design and operation to maintenance, optimization, and spare‑parts management.
+All technical, safety‑related, and sustainability‑related information is centrally managed within the AAS. This creates full transparency across the entire product lifecycle, from design and operation to maintenance, optimization, and spare parts management.
 
 
 ### After‑Sales Phase 
 
 #### 1. Scenario and User Role
-Once the vacuum gripper is in operation, the after‑sales phase begins, including: maintenance, repair, and spare parts management. Paul Newman, a service technician at the same company and supports customers in the field. When a malfunction is reported, such as a sudden loss of vacuum pressure, he uses the digital product data stored in the AAS to diagnose and resolve the issue efficiently. 
+Once the vacuum gripper is in operation, the after‑sales phase begins, including: maintenance, repair, and spare parts management. Paul Newman, a service technician at the same company, who supports customers in the field. When a malfunction is reported, such as a sudden loss of vacuum pressure, he uses the digital product data stored in the AAS to diagnose and resolve the issue efficiently. 
 
 The CAD assemblies created during development serve as his central reference. Using these models, together with derived views such as exploded views and assembly diagrams, Paul can perform maintenance tasks accurately and reliably. 
 
