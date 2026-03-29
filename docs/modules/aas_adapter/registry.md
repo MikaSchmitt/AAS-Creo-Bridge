@@ -179,9 +179,8 @@ No persistence is implemented. Closing the app loses state.
 
 ## Related Documentation
 
-- **Importer**: [`docs/modules/aas_adapter/importer.md`](./importer.md) — How to create `AASXImportResult` objects.
-- **Extractor**: [`docs/modules/aas_adapter/extractor.md`](./extractor.md) — How to extract models from registered
-  packages.
-- **Selection**: [`docs/modules/aas_adapter/selection.md`](./selection.md) — Model selection from extracted results.
-- **Models**: [`docs/modules/aas_adapter/models.md`](./models.md) — Data structures used by the registry.
+- [`Importer`](./importer.md) — How to create `AASXImportResult` objects.
+- [`Extractor`](./extractor.md) — How to extract models from registered packages.
+- [`Selection`](./selection.md) — Model selection from extracted results.
+- [`Models`](./models.md) — Data structures used by the registry.
 
