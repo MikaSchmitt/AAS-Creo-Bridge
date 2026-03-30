@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from aas_adapter import ConsumingApplication, get_global_asset_id, get_models_from_aas, select_best_model, \
     materialize_model_file, RegistryAction
-from aas_creo_bridge.adapters.creo import import_model_into_creo, PartParameters, Parameter, set_part_parameters
+from aas_creo_bridge.adapters import import_model_into_creo, PartParameters, Parameter, set_part_parameters
 from aas_creo_bridge.app.context import get_aasx_registry, get_creoson_client
 
 if TYPE_CHECKING:
