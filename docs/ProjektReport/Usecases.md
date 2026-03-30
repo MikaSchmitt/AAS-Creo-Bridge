@@ -1,12 +1,7 @@
 
 ## Use Cases
 
-# Folgender Einleitungstext muss nochmal angepasst werden auf anfängliche 6 cases (Siehe introduction) + wenn möglich bild vom drawio
-
-
-At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and
-discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two
-specific use cases: Engineering and After-Sales.
+At the beginning of this project, several functional areas of a hypothetical industrial company were outlined and discussed with respect to how the AAS could be applied in each context. The following use cases illustrate these concept in their practical application across the different functional areas.
 
 ## Engineering
 Who: Robert Redford, Mechanical Engineer
@@ -60,6 +55,8 @@ How:
   - CAD visualizations indicate safe disassembly procedures.
   - Documented materials are automatically assigned to the correct recycling streams.
 
+
+Subsequently, the scope was narrowed down to two specific use cases:
 
 ### Engineering
 
