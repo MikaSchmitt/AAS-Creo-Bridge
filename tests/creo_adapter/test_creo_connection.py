@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from aas_creo_bridge.adapters.creo.creo_connection import connect_to_creoson
+from aas_creo_bridge.adapters.creo_connection import connect_to_creoson
 
 CREOSON_DIR = Path(__file__).resolve().parents[2] / "creoson"
 

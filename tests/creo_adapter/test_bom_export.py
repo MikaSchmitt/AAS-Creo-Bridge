@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from aas_creo_bridge.adapters.creo.bom_export import get_assembly_data
-from aas_creo_bridge.adapters.creo.creo_connection import connect_to_creoson
-from aas_creo_bridge.adapters.creo.model_import import import_model_into_creo
-from aas_creo_bridge.adapters.creo.set_parameter import set_part_parameters
-from aas_creo_bridge.adapters.creo.types import Parameter, PartParameters
+from aas_creo_bridge.adapters.bom_export import get_assembly_data
+from aas_creo_bridge.adapters.creo_connection import connect_to_creoson
+from aas_creo_bridge.adapters.model_import import import_model_into_creo
+from aas_creo_bridge.adapters.set_parameter import set_part_parameters
+from aas_creo_bridge.adapters.types import Parameter, PartParameters
 
 CREOSON_DIR = Path(__file__).resolve().parents[2] / "creoson"
 ASM_PATH = Path(__file__).resolve().parents[1] / "fixtures/creo_test_asm/suction_gripper.asm.1"
