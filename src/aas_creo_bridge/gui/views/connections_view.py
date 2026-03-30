@@ -7,7 +7,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from aas_creo_bridge.adapters.creo import SessionChangeAction, CreoSessionFile
-from aas_creo_bridge.adapters.creo.bom_export import get_assembly_data
+from aas_creo_bridge.adapters.bom_export import get_assembly_data
 from aas_creo_bridge.app.context import (
     get_aasx_registry,
     get_creo_session_tracker,

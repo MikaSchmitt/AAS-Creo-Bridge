@@ -4,13 +4,13 @@ import threading
 import time
 from unittest.mock import MagicMock
 
-from aas_creo_bridge.adapters.creo.session_tracking import (
+from aas_creo_bridge.adapters.session_tracking import (
     CreoSessionTracker,
     SessionChangeAction,
     diff_session,
     snapshot_session,
 )
-from aas_creo_bridge.adapters.creo.types import CreoSessionFile, CreoSessionState
+from aas_creo_bridge.adapters.types import CreoSessionFile, CreoSessionState
 
 
 def _build_client() -> MagicMock:

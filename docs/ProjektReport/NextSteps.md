@@ -15,3 +15,6 @@ JSON/dict from Creoson). The next step is to write this data into the AAS and
 model it as appropriate submodels. A second core function should be the direct
 import of CAD models from Creo into an AAS, including storing the files in the
 AASX package and referencing them in the relevant submodels.
+For model import, a planned enhancement is to place parts not only at the
+coordinate origin but also insert them into an existing assembly at defined
+positions.

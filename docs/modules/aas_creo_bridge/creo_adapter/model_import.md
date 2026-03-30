@@ -18,7 +18,8 @@ Opens or imports a model into Creo based on file extension.
 Parameters:
 
 - `client` (`creopyson.Client`): Connected client.
-- `path` (`Path`): Absolute file path to the model.
+- `path` (`Path`): Absolute file path to the model. See "Common Patterns and Gotchas" below
+  for native revisioned file names.
 
 Returns:
 
@@ -28,7 +29,8 @@ Returns:
 
 - Validates that `path` exists, is absolute, and is a file.
 - Native formats (`.asm`, `.prt`) are opened directly with `file_open`.
-  The revision suffix (for example `.asm.1`) is stripped before opening.
+  The revision suffix (for example `.asm.1`) is stripped before opening, but the
+  provided `path` still must point to an existing file on disk.
 - Exchange formats are imported via `interface_import_file`:
     - STEP (`.stp`, `.step`)
     - IGES (`.igs`, `.iges`) (not tested)
@@ -55,7 +57,10 @@ This function is exercised by integration tests in
 ### 1) Revision suffixes in native files
 
 Native files like `assembly.asm.1` are opened by stripping the trailing
-revision suffix. Ensure the file is in Creo's search path.
+revision suffix. The `path` must include the on-disk revisioned file name
+(for example `assembly.asm.1`); a non-versioned path like `assembly.asm` will
+not exist and will fail the initial path existence check. Ensure the file is in
+Creo's search path.
 
 ### 2) Exchange import always creates a Creo model
 
