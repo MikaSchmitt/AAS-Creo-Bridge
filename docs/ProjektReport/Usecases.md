@@ -8,6 +8,59 @@ At the beginning of this project, several functional areas of a hypothetical ind
 discussed with respect to how the AAS could be applied in each context. Subsequently, the scope was narrowed down to two
 specific use cases: Engineering and After-Sales.
 
+## Engineering
+Who: Robert Redford, Mechanical Engineer
+What: Development of the gripper geometry
+How:
+  - Opening the AAS of the vacuum gripper and importing the assemblies into the CAD system.
+  - The AAS provides all relevant technical master data (e.g., materials, permissible vacuum level).
+  - Design modifications created in the CAD system are automatically synchronized back into the AAS.
+
+
+## Procurement
+Who: Audrey Hepburn, Procurement Specialist
+What: Procurement of external components (e.g., seals)
+How:
+  - Opening the complete assembly in the AAS, where components are automatically classified as internal or external.
+  - The full bill of materials (BOM) is directly accessible within the CAD system.
+  - Purchase orders and manufacturing orders are triggered automatically based on AAS data.
+
+
+## Production
+Who: Mary Shelley, Production Planner
+What: Creation of work plans, assembly sequences, and inspection processes
+How:
+  - The AAS provides exploded views, tightening torques, and step-by-step assembly sequences.
+  - Assembly paths and required tools are visualized within the CAD environment.
+  - Component availability is automatically retrieved from the AAS.
+
+
+## Sales
+Who: Cary Grant, Sales Representative
+What: Quotation preparation and variant configuration (e.g., different gripper widths)
+How:
+  - Using a simplified CAD view integrated in the AAS, Sales can configure product variants.
+  - The AAS automatically provides technical datasheets (e.g., vacuum level, operating limits).
+
+
+## Service / After-Sales
+Who: Paul Newman, Service Technician
+What: Fault diagnosis, maintenance, and repair
+How:
+  - Accessing the individual AAS reveals installed components and target/actual conditions.
+  - CAD-based disassembly instructions are available directly.
+  - Spare-part prices and ordering information are displayed in real time.
+
+
+## Recycling
+Who: Kyle Reese, Recycling Technician
+What: Disassembly of the gripper and proper disposal or further processing of individual materials
+How:
+  - The AAS provides detailed material information and recycling classifications.
+  - CAD visualizations indicate safe disassembly procedures.
+  - Documented materials are automatically assigned to the correct recycling streams.
+
+
 ### Engineering
 
 #### 1. Scenario and User Role
@@ -59,7 +112,7 @@ All technical, safety‑related, and sustainability‑related information is cen
 full transparency across the entire product lifecycle, from design and operation to maintenance, optimization, and spare
 parts management.
 
-### After‑Sales
+### Service / After-Sales
 
 #### 1. Scenario and User Role
 
