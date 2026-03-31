@@ -22,11 +22,21 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Optional, TypeVar
+from typing import Optional, TypeVar, Any
 
 from basyx.aas import model
-from basyx.aas.model import base, Submodel, SubmodelElementCollection, SubmodelElementList, \
-    AssetAdministrationShell, Property, File, DictObjectStore, SubmodelElement, MultiLanguageProperty
+from basyx.aas.model import (
+    base,
+    Submodel,
+    SubmodelElementCollection,
+    SubmodelElementList,
+    AssetAdministrationShell,
+    Property,
+    File,
+    DictObjectStore,
+    SubmodelElement,
+    MultiLanguageProperty,
+)
 
 from aas_adapter.models import FileFormat
 
@@ -83,7 +93,7 @@ def get_value(
         Iterable[model.SubmodelElement] | None
     """
 
-    sme = element
+    sme: Any = element
 
     if key:
         if isinstance(element, model.UniqueIdShortNamespace) or hasattr(
@@ -119,9 +129,9 @@ def check_expected_model(value: object, expected_type: type[T]) -> T:
 
 
 CACHE_DIR = Path(tempfile.mkdtemp(prefix="aas_adapter_"))
-CACHE_FILE = os.path.join(CACHE_DIR, 'cadenas_list.xml')
+CACHE_FILE = os.path.join(CACHE_DIR, "cadenas_list.xml")
 TTL = 86400  # 1 day in seconds
-URL_CADENAS_FORMAT_LIST = 'https://cadenas-admin.partcommunity.com/PARTcommunityManagement/FormatList?portal=3dfindit'
+URL_CADENAS_FORMAT_LIST = "https://cadenas-admin.partcommunity.com/PARTcommunityManagement/FormatList?portal=3dfindit"
 
 
 def get_cadenas_list():
@@ -140,7 +150,9 @@ def get_cadenas_list():
             tree = ET.parse(CACHE_FILE)
             return tree.getroot()
         except (ET.ParseError, OSError) as exc:
-            _logger.warning("Failed to parse cached Cadenas format list '%s': %s", CACHE_FILE, exc)
+            _logger.warning(
+                "Failed to parse cached Cadenas format list '%s': %s", CACHE_FILE, exc
+            )
             return None
 
     # Use cache if it exists and is still within TTL
@@ -156,7 +168,13 @@ def get_cadenas_list():
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             f.write(response_text)
         return ET.fromstring(response_text)
-    except (urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ET.ParseError) as exc:
+    except (
+            urllib.error.URLError,
+            TimeoutError,
+            OSError,
+            UnicodeDecodeError,
+            ET.ParseError,
+    ) as exc:
         _logger.warning(
             "Failed to fetch or parse online Cadenas format list from '%s': %s",
             URL_CADENAS_FORMAT_LIST,
@@ -191,25 +209,48 @@ def mcad_doc_name_to_cadenas_format(doc_name: str) -> FileFormat | None:
     return None
 
 
-def get_sm(object_store: DictObjectStore, aas: AssetAdministrationShell) -> Iterable[Submodel]:
+def get_sm(
+        object_store: DictObjectStore, aas: AssetAdministrationShell
+) -> Iterable[Submodel]:
     sm = []
     for sm_ref in aas.submodel:
         sm.append(sm_ref.resolve(object_store))
     return sm
 
 
-def get_child_sme(element: Submodel | SubmodelElementCollection | SubmodelElementList) -> \
-        Iterable[SubmodelElementCollection | SubmodelElementList | Property | File | MultiLanguageProperty]:
+def get_child_sme(
+        element: Submodel | SubmodelElementCollection | SubmodelElementList,
+) -> Iterable[
+    SubmodelElementCollection
+    | SubmodelElementList
+    | Property
+    | File
+    | MultiLanguageProperty
+    ]:
     match element:
         case Submodel():
-            return list(element.submodel_element or [])
+            return list(element.submodel_element or [])  # type: ignore
         case SubmodelElement():
-            return list(element.value or [])
+            return list(element.value or [])  # type: ignore
+    return []
 
 
-def get_child_elements(object_store: DictObjectStore,
-                       element: AssetAdministrationShell | Submodel | SubmodelElementCollection | SubmodelElementList) -> \
-        Iterable[Submodel | SubmodelElementCollection | SubmodelElementList | Property | File | MultiLanguageProperty]:
+def get_child_elements(
+        object_store: DictObjectStore,
+        element: (
+                AssetAdministrationShell
+                | Submodel
+                | SubmodelElementCollection
+                | SubmodelElementList
+        ),
+) -> Iterable[
+    Submodel
+    | SubmodelElementCollection
+    | SubmodelElementList
+    | Property
+    | File
+    | MultiLanguageProperty
+    ]:
     if isinstance(element, AssetAdministrationShell):
         return get_sm(object_store, element)
     return get_child_sme(element)
