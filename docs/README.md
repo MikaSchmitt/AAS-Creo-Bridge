@@ -4,7 +4,7 @@ This documentation covers the architecture, modules, and developer guides for th
 
 ## Quick Links
 
-- **[Architecture Overview](./architecture/overview.md)** — System design and data flow
+- **[Architecture Overview](./design/overview.md)** — System design and data flow
 - **[Setup Guide](./guides/setup.md)** — Getting started for developers
 
 ## Key Resources

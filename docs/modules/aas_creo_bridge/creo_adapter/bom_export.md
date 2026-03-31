@@ -71,7 +71,7 @@ file is included.
 ## Testing
 
 Integration tests are in
-[`tests/creo_adapter/test_bom_export.py`](../../../tests/creo_adapter/test_bom_export.py).
+[`tests/creo_adapter/test_bom_export.py`](../../../../tests/creo_adapter/test_bom_export.py).
 
 Run:
 

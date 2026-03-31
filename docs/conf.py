@@ -21,6 +21,7 @@ except Exception:
 project = "AAS-Creo-Bridge"
 author = "Your Team"
 copyright = ""
+language = "en"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -61,4 +62,15 @@ latex_documents = [
 latex_elements = {
     "papersize": "a4paper",
     "pointsize": "11pt",
+    "extraclassoptions": "openany,oneside",
+    "maketitle": r"""\input{custom_cover.inc}
+\input{erklaerung.inc}""",
+    "preamble": r"""\fvset{samepage=true}""",
 }
+latex_additional_files = [
+    "custom_cover.inc",
+    "erklaerung.inc",
+    "_images/HKA_MMT_Wortmarke_RGB.jpg",
+    "_images/HKA_MMT_Bildmarke-h_RGB.jpg",
+    "_images/Titelbild.png",
+]

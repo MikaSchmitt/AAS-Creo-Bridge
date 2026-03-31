@@ -26,7 +26,7 @@ The application supports several key workflows:
 
 ### 1. Exporting BOM from CAD to AAS
 
-1. The Bridge connects to a running Creo session via Creoson / Jink.
+1. The Bridge connects to a running Creo session via Creoson / JLink.
 2. The user initiates a BOM extraction from the **GUI**.
 3. **Creo_adapter** reads the hierarchical structure and parts information from Creo.
 4. The extracted JSON/Dict data is provided to the **aas_adapter**.

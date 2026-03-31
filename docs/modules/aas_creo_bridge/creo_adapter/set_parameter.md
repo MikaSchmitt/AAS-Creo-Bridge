@@ -48,7 +48,7 @@ Parameters:
 ## Testing
 
 These functions are covered indirectly by the integration tests in
-[`tests/creo_adapter/test_bom_export.py`](../../../tests/creo_adapter/test_bom_export.py).
+[`tests/creo_adapter/test_bom_export.py`](../../../../tests/creo_adapter/test_bom_export.py).
 
 ## Common Patterns and Gotchas
 

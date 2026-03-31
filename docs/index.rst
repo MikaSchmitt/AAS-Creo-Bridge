@@ -4,12 +4,13 @@ AAS-Creo-Bridge Documentation
 =============================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
    ProjektReport/Introduction
    ProjektReport/Usecases
    ProjektReport/SoftwareUtilized
+   ProjektReport/ResourcesAndTools
    design/overview
    design/design_decisions
    design/code_structure
@@ -19,14 +20,14 @@ AAS-Creo-Bridge Documentation
    modules/aas_creo_bridge/app/index
    modules/aas_creo_bridge/gui/index
    modules/aas_creo_bridge/creo_adapter/index
+   ProjektReport/CurrentCapabilities
    ProjektReport/NextSteps
-..
-   guides/documentation
-   api
 
-Indices and tables
-==================
+.. only:: html
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   Indices and tables
+   ==================
+
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`

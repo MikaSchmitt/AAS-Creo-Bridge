@@ -50,7 +50,7 @@ Returns:
 ## Testing
 
 This function is exercised by integration tests in
-[`tests/creo_adapter/test_bom_export.py`](../../../tests/creo_adapter/test_bom_export.py).
+[`tests/creo_adapter/test_bom_export.py`](../../../../tests/creo_adapter/test_bom_export.py).
 
 ## Common Patterns and Gotchas
 

@@ -9,12 +9,12 @@ It explains how the different parts of the code interact to provide the core fun
 AAS-Creo-Bridge/
 ├── docs/                  # Documentation (Sphinx, Architecture, Guides)
 ├── src/                   # Main source code directory
-│   ├── aas_adapter/       # Module for interacting with Asset Administration Shells
+│   ├── aas_adapter/       # Module for interacting with AAS
 │   └── aas_creo_bridge/   # Application core, GUI, and CAD (Creo) adapters
 ├── tests/                 # Unit and Integration test suite (pytest)
 ├── creoson/               # Creoson microserver binaries and configuration
 ├── scripts/               # Build and utility scripts
-└── root level files       # configurations (pytest.ini, requirements.txt, etc.)
+└── root level files       # configurations (pytest.ini, etc.)
 ```
 
 ## Module Responsibilities

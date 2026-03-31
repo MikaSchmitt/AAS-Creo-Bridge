@@ -59,6 +59,11 @@ if not exist "%DocsPath%\" (
     exit /b 1
 )
 
+echo Cleaning Sphinx autosummary cache...
+if exist "%DocsPath%\_autosummary\" (
+    rmdir /s /q "%DocsPath%\_autosummary"
+)
+
 echo Building Sphinx PDF from %DocsPath%
 echo Using Python: %PythonExe%
 
@@ -74,13 +79,20 @@ if not errorlevel 1 (
 
     echo [INFO] Compiling PDF using pdflatex...
     cd /d "%BuildPath%\latex"
-    pdflatex -interaction=nonstopmode *.tex
+    for %%f in (*.tex) do pdflatex -interaction=nonstopmode "%%f"
 
     if errorlevel 1 (
         echo [WARNING] pdflatex encountered some warnings/errors, but PDF may still rely on second pass.
     )
 
-    pdflatex -interaction=nonstopmode *.tex
+    :: Build index if idx exists
+    for %%f in (*.idx) do makeindex -s python.ist "%%f"
+
+    :: Second pass
+    for %%f in (*.tex) do pdflatex -interaction=nonstopmode "%%f"
+
+    :: Third pass to resolve cross-references generated in the 2nd pass
+    for %%f in (*.tex) do pdflatex -interaction=nonstopmode "%%f"
 
     cd /d "%ScriptDir%\.."
     echo [SUCCESS] PDF build complete. Output is under %BuildPath%\latex
@@ -95,6 +107,3 @@ if errorlevel 1 (
 )
 echo [INFO] LaTeX sources generated under %BuildPath%\latex. Install MiKTeX or TeX Live to compile PDF.
 exit /b 0
-
-
-

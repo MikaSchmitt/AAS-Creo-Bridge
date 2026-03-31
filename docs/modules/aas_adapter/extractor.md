@@ -5,7 +5,7 @@
 ## Overview
 
 The extractor module is responsible extracting 3D Models in the form of CAD documents and related Information from AAS.
-The Extractor requires an AASX import result containing a object store and a file store as well as an AAS identifier.
+The Extractor requires an AASX import result containing an object store and a file store as well as an AAS identifier.
 Given those it first locates `Provision of 3D Models` and `MCAD` submodels. Then it parses the metadata including file
 versions, file
 formats and consuming applications. It also extracts references to the supplemental files (only `DigitalFile`,
@@ -45,7 +45,7 @@ Submodel (semantic_id = Models3D)
       │           └─ ExternalFile (File, optional, not yet supported)
 ```
 
-When traversing the Submodel all elements are identified and searched for by their `idShort`. Unnessessary elements are
+When traversing the Submodel all elements are identified and searched for by their `idShort`. Unnecessary elements are
 skipped. Consuming Application is treated as optional. The `FileVersion` Submodel Element Collection is essential. If it
 is missing a ValueError is raised.
 
@@ -139,7 +139,10 @@ result = import_aasx(Path("model.aasx"))
 if result.shells:
     models = get_models_from_aas(result, result.shells[0])
     for file_data in models:
-        print(f"Consuming apps: {[app.application_name for app in file_data.consuming_applications]}")
+        print(f"Consuming apps: 
+        {[app.application_name for app in file_data.consuming_applications]}
+        "
+        )
         for meta in file_data.metadata:
             print(f"  - Version {meta.file_version}: {meta.filepath}")
 ```
@@ -272,9 +275,5 @@ ID objects or construct them consistently.
   options.
 - **Materializer**: [`docs/modules/aas_adapter/materializer.md`](./materializer.md) — How to extract and write model
   files to disk.
-- **Helpers**: [`docs/modules/aas_adapter/helpers.md`](./helpers.md) — Utilities for AAS element access and Cadenas
-  format lookup.
-- **Models**: [`docs/modules/aas_adapter/models.md`](./models.md) — Data structures for consuming applications, file
-  formats, and metadata.
 - **AAS Submodel Templates
   **: [Provision of 3D Models](https://github.com/admin-shell-io/submodel-templates/tree/main/published/Provision%20of%203D%20Models/1/0)
