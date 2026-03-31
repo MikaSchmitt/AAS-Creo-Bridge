@@ -59,4 +59,4 @@ pytest tests\app\test_sync_manager.py
 
 Take a look at the following documentation
 
-- **[Architecture Overview](../architecture/overview.md)** — System design and data flow
+- **[Architecture Overview](../design/overview.md)** — System design and data flow
