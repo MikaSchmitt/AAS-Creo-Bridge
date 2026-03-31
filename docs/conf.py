@@ -28,6 +28,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinx_simplepdf",
 ]
 
 source_suffix = {

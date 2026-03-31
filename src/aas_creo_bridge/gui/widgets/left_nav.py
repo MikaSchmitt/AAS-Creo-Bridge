@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import tkinter as tk
+from functools import partial
 from typing import Callable
+
 
 class LeftNav(tk.Frame):
     def __init__(
-        self,
-        master: tk.Misc,
-        *,
-        views: list[str],
-        on_select_view: Callable[[str], None],
-        initial_expanded: bool = False,
-        width_expanded: int = 200,
-        width_collapsed: int = 52,
-        compact_icons: dict[str, str] | None = None,
+            self,
+            master: tk.Misc,
+            *,
+            views: list[str],
+            on_select_view: Callable[[str], None],
+            initial_expanded: bool = False,
+            width_expanded: int = 200,
+            width_collapsed: int = 52,
+            compact_icons: dict[str, str] | None = None,
     ) -> None:
         super().__init__(master, bd=1, relief="solid")
 
@@ -49,7 +51,7 @@ class LeftNav(tk.Frame):
                 self._btn_container,
                 text=name,
                 anchor="w",
-                command=lambda n=name: self._on_select_view(n),
+                command=partial(self._on_select_view, name),
             )
             btn.grid(row=idx, column=0, sticky="ew", pady=2)
             self._buttons[name] = btn
@@ -76,4 +78,6 @@ class LeftNav(tk.Frame):
             self._toggle_btn.configure(text="⟩⟩")
             self._title.configure(text="")
             for name, btn in self._buttons.items():
-                btn.configure(text=self._compact_icons.get(name, name[:1]), anchor="center")
+                btn.configure(
+                    text=self._compact_icons.get(name, name[:1]), anchor="center"
+                )

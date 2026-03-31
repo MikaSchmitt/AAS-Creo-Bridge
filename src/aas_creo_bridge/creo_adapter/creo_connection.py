@@ -33,7 +33,9 @@ def run_creoson_setup(server_folder_path: Path) -> None:
     )
 
     if completed.returncode != 0:
-        raise RuntimeError(f"CreosonSetup.exe failed with exit code {completed.returncode}")
+        raise RuntimeError(
+            f"CreosonSetup.exe failed with exit code {completed.returncode}"
+        )
 
 
 def connect_to_creoson(
@@ -88,11 +90,15 @@ def connect_to_creoson(
             _logger.info("Creoson server is running")
         else:
             _logger.error("Creoson server exited with status %s", status)
-            _logger.error("Creoson server exited prematurely. Check if Creoson is configured correctly.")
+            _logger.error(
+                "Creoson server exited prematurely. Check if Creoson is configured correctly."
+            )
             run_creoson_setup(server_folder_path)
 
         try:
-            _logger.info("Attempting to connect to Creoson (%s/%s)...", attempt, max_retries)
+            _logger.info(
+                "Attempting to connect to Creoson (%s/%s)...", attempt, max_retries
+            )
             client.connect()
             _logger.info("Successfully connected to Creoson.")
             return client
@@ -100,7 +106,9 @@ def connect_to_creoson(
             if attempt < max_retries:
                 time.sleep(delay)
             else:
-                raise RuntimeError("Connection to Creoson failed after several attempts.")
+                raise RuntimeError(
+                    "Connection to Creoson failed after several attempts."
+                )
         except RuntimeError | MissingKey as e:
             raise RuntimeError(f"Failed to connect to Creoson: {e}") from e
     return None

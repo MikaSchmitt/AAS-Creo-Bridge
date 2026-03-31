@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 
 from aas_adapter import ConsumingApplication, get_global_asset_id, get_models_from_aas, select_best_model, \
     materialize_model_file, RegistryAction
-from aas_creo_bridge.adapters import import_model_into_creo, PartParameters, Parameter, set_part_parameters
 from aas_creo_bridge.app.context import get_aasx_registry, get_creoson_client
+from aas_creo_bridge.creo_adapter import import_model_into_creo, PartParameters, Parameter, set_part_parameters
 
 if TYPE_CHECKING:
     from typing import List
@@ -178,7 +178,7 @@ class SynchronizationManager:
 
         return None
 
-    def _on_registry_changed(self, action: str, shells: list[str]):
+    def _on_registry_changed(self, action: RegistryAction, shells: list[str]):
         if action == RegistryAction.add:
             for shell in shells:
                 self.link(shell, None)

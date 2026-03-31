@@ -6,8 +6,6 @@ from dataclasses import asdict
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from aas_creo_bridge.adapters import SessionChangeAction, CreoSessionFile
-from aas_creo_bridge.adapters.bom_export import get_assembly_data
 from aas_creo_bridge.app.context import (
     get_aasx_registry,
     get_creo_session_tracker,
@@ -15,6 +13,8 @@ from aas_creo_bridge.app.context import (
     get_logger,
     get_sync_manager,
 )
+from aas_creo_bridge.creo_adapter import SessionChangeAction, CreoSessionFile
+from aas_creo_bridge.creo_adapter.bom_export import get_assembly_data
 
 
 class ConnectionsView(tk.Frame):
