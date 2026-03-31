@@ -41,7 +41,9 @@ def set_parameter(
             e,
             exc_info=True,
         )
-        raise RuntimeError(f"Failed to set parameter '{parameter.name}' for '{file_name}'") from e
+        raise RuntimeError(
+            f"Failed to set parameter '{parameter.name}' for '{file_name}'"
+        ) from e
 
 
 def set_part_parameters(

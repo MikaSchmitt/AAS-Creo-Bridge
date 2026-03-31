@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
 
 from aas_adapter.importer import AASXImportResult
@@ -13,7 +13,10 @@ if typing.TYPE_CHECKING:
 
 _logger = logging.getLogger(__name__)
 
-RegistryAction = Enum("RegistryAction", ["add", "remove"])
+
+class RegistryAction(Enum):
+    add = auto()
+    remove = auto()
 
 
 @dataclass
@@ -52,12 +55,14 @@ class AASXRegistry:
         The result is indexed by its file path and all Asset Administration Shell
         identifiers it contains.
 
+        ASS IDs are unique. If a shell with the AAS ID is already registered, it is replaced.
+
         :param result: The AASX import result to register.
         :type result: AASXImportResult
         """
         self._by_path[result.path] = AASXEntry(result=result)
         for aas_id in result.shells:
-            self._by_id[aas_id] = AASXEntry(result=result)  # TODO: handle duplicates
+            self._by_id[aas_id] = AASXEntry(result=result)
         self._notify_listeners(RegistryAction.add, result.shells)
 
     def unregister(self, path: Path) -> None:
@@ -126,21 +131,27 @@ class AASXRegistry:
         """
         Clear all entries from the registry and notify listeners.
         """
-        shells = [shell for entry in self._by_path.values() for shell in entry.result.shells]
+        shells = [
+            shell for entry in self._by_path.values() for shell in entry.result.shells
+        ]
         self._by_path.clear()
         self._by_id.clear()
         self._notify_listeners(RegistryAction.remove, shells)
 
-    def add_listener(self, listener: Callable[[RegistryAction, list[str]], None]) -> None:
+    def add_listener(
+            self, listener: Callable[[RegistryAction, list[str]], None]
+    ) -> None:
         """Register a callback to be notified when the registry changes."""
         self._listeners.append(listener)
 
-    def remove_listener(self, listener: Callable[[RegistryAction, list[str]], None]) -> None:
+    def remove_listener(
+            self, listener: Callable[[RegistryAction, list[str]], None]
+    ) -> None:
         """Unregister a previously registered listener."""
         if listener in self._listeners:
             self._listeners.remove(listener)
 
-    def _notify_listeners(self, action: str, aas_ids: list[str]) -> None:
+    def _notify_listeners(self, action: RegistryAction, aas_ids: list[str]) -> None:
         """Call all registered listeners."""
         for listener in self._listeners:
             try:

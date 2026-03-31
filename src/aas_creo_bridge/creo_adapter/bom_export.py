@@ -72,7 +72,9 @@ def _build_entity_tree(bom_res: dict[str, Any], *, get_transforms: bool) -> Creo
             bom_file,
             root_file,
         )
-    root_seq_path = _get_seq_path(root_node or {}) or str(bom_res.get("seq_path") or "root")
+    root_seq_path = _get_seq_path(root_node or {}) or str(
+        bom_res.get("seq_path") or "root"
+    )
     root = CreoEntity(file_name=root_file, seq_path=root_seq_path, level=0)
     index: dict[str, CreoEntity] = {root.seq_path: root}
 
@@ -81,7 +83,9 @@ def _build_entity_tree(bom_res: dict[str, Any], *, get_transforms: bool) -> Creo
         seq_path = _get_seq_path(node)
         if not seq_path:
             seq_path = f"{root.seq_path}.unknown_{len(index)}"
-            _logger.warning("BOM node missing seq_path; generated fallback: %s", seq_path)
+            _logger.warning(
+                "BOM node missing seq_path; generated fallback: %s", seq_path
+            )
 
         level = node.get("level")
         if not isinstance(level, int):
@@ -227,7 +231,9 @@ def _enrich_entities(
         if include_bounding_box:
             if file_name not in bbox_cache:
                 try:
-                    bbox_cache[file_name] = client.geometry_bound_box(file_=file_name) or {}
+                    bbox_cache[file_name] = (
+                            client.geometry_bound_box(file_=file_name) or {}
+                    )
                 except Exception as exc:
                     _logger.warning(
                         "Creoson API error for bounding box '%s': %r",
@@ -248,10 +254,14 @@ def _enrich_entities(
                 entity.width = max_y - min_y
                 entity.height = max_z - min_z
             except Exception:
-                _logger.warning("Invalid bounding box data for '%s': %s", file_name, bbox)
+                _logger.warning(
+                    "Invalid bounding box data for '%s': %s", file_name, bbox
+                )
 
 
-def get_assembly_component_files(client: creopyson.Client, target_model: str) -> set[str]:
+def get_assembly_component_files(
+        client: creopyson.Client, target_model: str
+) -> set[str]:
     """
     Return only unique component file names from an assembly (minimal mode).
     """

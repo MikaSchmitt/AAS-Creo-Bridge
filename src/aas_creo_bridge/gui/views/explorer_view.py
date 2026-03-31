@@ -6,8 +6,8 @@ from tkinter import ttk
 from basyx.aas.model import AssetAdministrationShell, Property, MultiLanguageProperty, File
 
 from aas_adapter import check_expected_model, get_child_elements, get_value
-from aas_creo_bridge.adapters import CreoSessionFile, SessionChangeAction
 from aas_creo_bridge.app.context import get_aasx_registry, get_logger, get_creo_session_tracker, get_sync_manager
+from aas_creo_bridge.creo_adapter import CreoSessionFile, SessionChangeAction
 
 
 class ExplorerView(tk.Frame):
