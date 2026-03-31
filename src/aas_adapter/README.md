@@ -99,7 +99,7 @@ file format is present as in the file format specification by CADENAS.
 
 - [Getting Started](../../docs/guides/setup.md) - How to set up the development environment and run the application.
 - [basyx-python-sdk](https://github.com/basyx/basyx-python-sdk) - The core library of the `aas_adapter`.
-- [Project architecture](../../docs/architecture/overview.md) - get an overview over the project's architecture
+- [Project architecture](../../docs/design/overview.md) - get an overview over the project's architecture
 - [AAS-Adapter Importer](../../docs/modules/aas_adapter/importer.md) - How to import AASX files.
 - [AAS-Adapter Registry](../../docs/modules/aas_adapter/registry.md) - How to manage the registry of imported AAS.
 - [AAS-Adapter Extractor](../../docs/modules/aas_adapter/extractor.md) - How to extract 3D models from imported shells.

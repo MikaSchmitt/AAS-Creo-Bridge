@@ -182,5 +182,4 @@ No persistence is implemented. Closing the app loses state.
 - [`Importer`](./importer.md) — How to create `AASXImportResult` objects.
 - [`Extractor`](./extractor.md) — How to extract models from registered packages.
 - [`Selection`](./selection.md) — Model selection from extracted results.
-- [`Models`](./models.md) — Data structures used by the registry.
 

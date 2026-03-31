@@ -27,7 +27,7 @@ an Asset Administration Shell (AAS). The interaction is handled through a graphi
 
 For detailed instructions on specific CAD systems:
 
-- [Creo Integration Guide](docs/user_guides/creo.md)
+- [Creo Integration Guide](docs/modules/aas_creo_bridge/creo_adapter)
 - Siemens NX Guide (Coming Soon)
 
 # Graphical User Interface (GUI)
