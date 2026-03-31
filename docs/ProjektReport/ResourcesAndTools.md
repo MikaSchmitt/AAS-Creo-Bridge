@@ -1,6 +1,6 @@
 # Resources and Tools
 
-This work relied on official documentation and community references, including
-the Creoson Wiki and the Eclipse BaSyx Wiki. An AI assistant was used to support
-code generation, but final decisions, validation, and control always remained
-with the human developers.
+Official documentation and community references (notably the Creoson Wiki and Eclipse BaSyx Wiki)
+guided development throughout this work. The AI assistants GitHub Copilot and Gemini were used to
+generate draft code and support code review. Ttheir output served as input to the final design,
+which was reviewed, validated, and finalized by the developers.

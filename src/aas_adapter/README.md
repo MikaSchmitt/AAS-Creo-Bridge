@@ -1,5 +1,3 @@
-#
-
 ## Purpose
 
 The `aas_adapter` is a toolkit for working with AAS. It builds upon the

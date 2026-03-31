@@ -8,7 +8,7 @@ AAS-Creo-Bridge. It explains the rationale behind the chosen approaches, framewo
 The AAS-Creo-Bridge is designed as a standalone "companion" application that runs alongside PTC Creo Parametric, rather
 than as an embedded plugin or integrated toolkit extension running directly inside the Creo process.
 
-### Rationale
+The rationale behind this approach is based on several key factors:
 
 * **Technology Stack Flexibility:** Creo plugins are typically written in C/C++ (Creo Toolkit) or Java (J-Link). By
   using a companion app architecture that communicates via an API (Creoson), we were able to write the entire
@@ -28,7 +28,7 @@ than as an embedded plugin or integrated toolkit extension running directly insi
 To bridge the gap between our Python application and PTC Creo, we chose to use **Creoson** (accessed via the `creopyson`
 Python wrapper) instead of the native **Creo Toolkit** (C/C++) or **J-Link** (Java) APIs directly.
 
-### Rationale
+The rationale behind this approach is based on several key factors:
 
 * **Language Barrier:** The native Creo APIs are heavily tied to C/C++ and Java. Calling native C++ Creo Toolkit
   functions from Python requires complex bindings (such as ctypes, SWIG, or Pybind11) which are difficult to maintain
@@ -62,7 +62,7 @@ Python wrapper) instead of the native **Creo Toolkit** (C/C++) or **J-Link** (Ja
 
 The graphical user interface for the AAS-Creo-Bridge is built using **Tkinter**, Python's native GUI toolkit.
 
-### Rationale
+The rationale behind this approach is based on several key factors:
 
 * **Zero Dependencies & Built-in:** Tkinter is included with standard Python installations on Windows. This eliminates
   the need to bundle large third-party GUI frameworks, keeping the application's footprint smaller and simplifying the
@@ -76,4 +76,3 @@ The graphical user interface for the AAS-Creo-Bridge is built using **Tkinter**,
 * **Trade-offs:** Tkinter's default look and feel can appear slightly dated out-of-the-box compared to modern
   frameworks like PyQt/PySide or web-based electron apps. However, using `ttk` themes helps mitigate this, providing a
   native OS appearance that is more than adequate for a professional engineering utility.
-

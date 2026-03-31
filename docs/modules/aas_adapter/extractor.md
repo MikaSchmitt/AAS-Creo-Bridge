@@ -139,7 +139,10 @@ result = import_aasx(Path("model.aasx"))
 if result.shells:
     models = get_models_from_aas(result, result.shells[0])
     for file_data in models:
-        print(f"Consuming apps: {[app.application_name for app in file_data.consuming_applications]}")
+        print(f"Consuming apps: 
+        {[app.application_name for app in file_data.consuming_applications]}
+        "
+        )
         for meta in file_data.metadata:
             print(f"  - Version {meta.file_version}: {meta.filepath}")
 ```

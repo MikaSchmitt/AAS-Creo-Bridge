@@ -20,10 +20,10 @@ an Asset Administration Shell (AAS). The interaction is handled through a graphi
 
 | Feature                                            | Creo      | Siemens NX |
 |----------------------------------------------------|-----------|------------|
-| Importing a 3D model from an AAS into CAD software | Planned   | Planned    |
-| Exporting a BOM from CAD software into an AAS      | Supported | Planned    |
-| Embedding the AAS ID in the 3D model               | Supported | Planned    |
-| Assigning AAS IDs to a list of 3D models           | Supported | Planned    |
+| Importing a 3D model from an AAS into CAD software | Supported | Supported  |
+| Exporting a BOM from CAD software into an AAS      | Supported | Supported  |
+| Embedding the AAS ID in the 3D model               | Supported | Supported  |
+| Assigning AAS IDs to a list of 3D models           | Supported | Supported  |
 
 For detailed instructions on specific CAD systems:
 
