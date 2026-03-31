@@ -17,7 +17,7 @@ We hereby certify that we prepared this work independently, have fully and preci
 
 We further declare that when using IT/AI-assisted writing tools we have fully listed these tools in the section \enquote{Resources and Tools}, including their product name, our source, and an overview of the functionality used in the scope of this study project.
 
-We confirm that we worked independently throughout the preparation of the submitted assessment and, when using IT/AI-assisted writing tools, exercised steering control.
+We confirm that we worked independently throughout the preparation of the submitted assessment and exercised control when using IT/AI-assisted writing tools.
 
 
 

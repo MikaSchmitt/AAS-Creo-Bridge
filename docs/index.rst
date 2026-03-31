@@ -10,6 +10,7 @@ AAS-Creo-Bridge Documentation
    ProjektReport/Introduction
    ProjektReport/Usecases
    ProjektReport/SoftwareUtilized
+   ProjektReport/ResourcesAndTools
    design/overview
    design/design_decisions
    design/code_structure
@@ -19,6 +20,7 @@ AAS-Creo-Bridge Documentation
    modules/aas_creo_bridge/app/index
    modules/aas_creo_bridge/gui/index
    modules/aas_creo_bridge/creo_adapter/index
+   ProjektReport/CurrentCapabilities
    ProjektReport/NextSteps
 
 .. only:: html
