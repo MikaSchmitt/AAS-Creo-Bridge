@@ -28,10 +28,14 @@ def snapshot_session(client: creopyson.Client) -> CreoSessionState:
     """Capture file list, per-file revision, and currently active file from Creo."""
     try:
         if not client.is_creo_running():
-            return CreoSessionState(files={}, active_file_name=None, captured_at=datetime.now(UTC))
+            return CreoSessionState(
+                files={}, active_file_name=None, captured_at=datetime.now(UTC)
+            )
     except ConnectionError as e:
         _logger.warning("Failed to connect to Creo: %s", e)
-        return CreoSessionState(files={}, active_file_name=None, captured_at=datetime.now(UTC))
+        return CreoSessionState(
+            files={}, active_file_name=None, captured_at=datetime.now(UTC)
+        )
     file_names = client.file_list() or []
     files: dict[str, CreoSessionFile] = {}
 
@@ -42,20 +46,32 @@ def snapshot_session(client: creopyson.Client) -> CreoSessionState:
         files[file_name] = CreoSessionFile(info.get("file"), info.get("revision"))
 
     active_data = client.file_get_active() or {}
-    active_file_name = active_data.get("file") if isinstance(active_data, dict) else None
-    return CreoSessionState(files=files, active_file_name=active_file_name, captured_at=datetime.now(UTC))
+    active_file_name = (
+        active_data.get("file") if isinstance(active_data, dict) else None
+    )
+    return CreoSessionState(
+        files=files, active_file_name=active_file_name, captured_at=datetime.now(UTC)
+    )
 
 
-def diff_session(previous: CreoSessionState, current: CreoSessionState) -> CreoSessionDelta:
+def diff_session(
+        previous: CreoSessionState, current: CreoSessionState
+) -> CreoSessionDelta:
     previous_names = set(previous.files)
     current_names = set(current.files)
 
-    added = tuple(sorted(
-        (current.files[name] for name in (current_names - previous_names)),
-        key=lambda item: item.file_name))
-    removed = tuple(sorted(
-        (previous.files[name] for name in (previous_names - current_names)),
-        key=lambda item: item.file_name))
+    added = tuple(
+        sorted(
+            (current.files[name] for name in (current_names - previous_names)),
+            key=lambda item: item.file_name,
+        )
+    )
+    removed = tuple(
+        sorted(
+            (previous.files[name] for name in (previous_names - current_names)),
+            key=lambda item: item.file_name,
+        )
+    )
 
     revision_changed_items: list[CreoSessionFile] = []
     for name in sorted(previous_names & current_names):
@@ -156,10 +172,15 @@ class CreoSessionTracker:
         while not self._stop_event.is_set():
             try:
                 self.refresh()
-                if timeout_seconds is not None and (time.monotonic() - start) >= timeout_seconds:
+                if (
+                        timeout_seconds is not None
+                        and (time.monotonic() - start) >= timeout_seconds
+                ):
                     break
             except Exception as exc:
-                _logger.error("Error while polling Creo session: %s", exc, exc_info=True)
+                _logger.error(
+                    "Error while polling Creo session: %s", exc, exc_info=True
+                )
 
             self._stop_event.wait(self._poll_interval_seconds)
 
@@ -183,4 +204,6 @@ class CreoSessionTracker:
             try:
                 listener(action, files)
             except Exception as exc:
-                _logger.error("Error in CreoSessionTracker listener: %s", exc, exc_info=True)
+                _logger.error(
+                    "Error in CreoSessionTracker listener: %s", exc, exc_info=True
+                )

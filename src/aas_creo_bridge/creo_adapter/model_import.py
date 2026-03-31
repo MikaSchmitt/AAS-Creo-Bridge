@@ -22,15 +22,17 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> str:
         raise ValueError(f"Path must be a file: {path}")
 
     # Extract all extensions (lowercase, without dots)
-    extensions = [s.lower().strip('.') for s in path.suffixes]
+    extensions = [s.lower().strip(".") for s in path.suffixes]
 
     try:
         # --- 1. Native Creo Formats ---
         if "asm" in extensions or "prt" in extensions:
             name_wo_revision = re.sub(r"\.\d+$", "", path.name)
-            response = client.file_open(file_=name_wo_revision, dirname=str(path.parent), display=True)
+            response = client.file_open(
+                file_=name_wo_revision, dirname=str(path.parent), display=True
+            )
             _logger.info("Successfully opened native file: %s", path.name)
-            return response.get('files')[0]
+            return response.get("files")[0]
 
         # --- 2. Non-native Formats (Interface Import) ---
         file_type = ""
@@ -56,14 +58,22 @@ def import_model_into_creo(client: creopyson.Client, path: Path) -> str:
         )  # Use filename without extensions as model name
         response = client.file_open(imported_model_name, display=True)
 
-        _logger.info("Successfully imported and opened %s model: %s", file_type, imported_model_name)
-        return response.get('files')[0]
+        _logger.info(
+            "Successfully imported and opened %s model: %s",
+            file_type,
+            imported_model_name,
+        )
+        return response.get("files")[0]
 
     except RuntimeError as e:
-        _logger.error("Failed to import/open model '%s': %r", path.name, e, exc_info=True)
+        _logger.error(
+            "Failed to import/open model '%s': %r", path.name, e, exc_info=True
+        )
         raise RuntimeError(f"Failed to import/open model '{path.name}'") from e
 
     except Exception as e:
         # Catching any Creoson or connection errors to prevent program crash
-        _logger.error("Failed to import/open model '%s': %r", path.name, e, exc_info=True)
+        _logger.error(
+            "Failed to import/open model '%s': %r", path.name, e, exc_info=True
+        )
         raise RuntimeError(f"Failed to import/open model '{path.name}'") from e
