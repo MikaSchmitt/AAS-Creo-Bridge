@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 from creopyson.exceptions import MissingKey
 
-from aas_creo_bridge.adapters import connect_to_creoson, CreoSessionTracker
 from aas_creo_bridge.app.logging import LogStore
+from aas_creo_bridge.creo_adapter import connect_to_creoson, CreoSessionTracker
 from creopyson import Client
 
 if TYPE_CHECKING:
